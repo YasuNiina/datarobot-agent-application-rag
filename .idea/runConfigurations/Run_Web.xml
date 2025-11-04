@@ -1,0 +1,23 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run Web" type="Python.FastAPI">
+    <option name="additionalOptions" value="--reload --host 0.0.0.0 --port 8080" />
+    <option name="appName" value="app" />
+    <option name="file" value="$PROJECT_DIR$/web/app/main.py" />
+    <module name="recipe-datarobot-agent-application" />
+    <option name="ENV_FILES" value="" />
+    <option name="INTERPRETER_OPTIONS" value="" />
+    <option name="PARENT_ENVS" value="true" />
+    <envs>
+      <env name="DOTENV_FILE" value="../.env" />
+    </envs>
+    <option name="SDK_HOME" value="$PROJECT_DIR$/web/.venv/bin/python" />
+    <option name="SDK_NAME" value="uv (web)" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/web" />
+    <option name="IS_MODULE_SDK" value="false" />
+    <option name="ADD_CONTENT_ROOTS" value="true" />
+    <option name="ADD_SOURCE_ROOTS" value="true" />
+    <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+    <option name="launchJavascriptDebuger" value="false" />
+    <method v="2" />
+  </configuration>
+</component>

@@ -1,0 +1,113 @@
+---
+# https://taskfile.dev
+version: '3'
+vars:
+  # Cross-platform environment cleaning - uses 'env -u' on Unix systems, falls back to empty string on Windows
+  CLEAN_PYTHON_ENV:
+    sh: |
+      if command -v env >/dev/null 2>&1; then
+        echo "env -u PYTHONPATH -u VIRTUAL_ENV"
+      else
+        echo ""
+      fi
+tasks:
+  install:
+    desc: 🛠️ [writer_agent] Install agent uv dependencies
+    cmds:
+      - echo "Updating local dependencies for writer_agent"
+      - uv sync --extra dev
+      - if [ -f pyproject.toml ] && [ -d docker_context ]; then cp pyproject.toml docker_context/pyproject.toml; fi
+      - if [ -f uv.lock ] && [ -d docker_context ]; then cp uv.lock docker_context/uv.lock; fi
+    aliases:
+      - req
+  update:
+    # Hidden to avoid showing in task list, run `task --list-all` to see it
+    # desc: 🛠️ [writer_agent] Update local dependencies (refresh uv locks)
+    cmds:
+      - echo "Updating local dependencies"
+      - uv sync --extra dev -U
+    silent: true
+  add-dependency:
+    desc: 🛠️ [writer_agent] Add provided packages as a new dependency to an agent
+    cmds:
+      - echo "Adding new dependency for writer_agent into 'extras' dependency group"
+      - uv add --no-upgrade --group extras {{.CLI_ARGS}}
+    silent: true
+  lint:
+    # Hidden to avoid showing in task list, run `task --list-all` to see it
+    # desc: 🧹 [writer_agent] Lint the codebase
+    cmds:
+      - task: req
+      - echo "Linting the codebase"
+      - "{{.CLEAN_PYTHON_ENV}} uv run ruff check . --fix"
+      - "{{.CLEAN_PYTHON_ENV}} uv run ruff format ."
+      - "{{.CLEAN_PYTHON_ENV}} uv run mypy --pretty ."
+      - "{{.CLEAN_PYTHON_ENV}} uv run yamlfix custom_model"
+    silent: true
+  lint-check:
+    # Hidden to avoid showing in task list, run `task --list-all` to see it
+    # desc: 🧹 [writer_agent] Check whether the codebase is linted
+    cmds:
+      - task: req
+      - echo "Checking linting"
+      - "{{.CLEAN_PYTHON_ENV}} uv run ruff format --check --diff ."
+      - "{{.CLEAN_PYTHON_ENV}} uv run ruff check --diff ."
+      - echo "Checking type hints"
+      - "{{.CLEAN_PYTHON_ENV}} uv run mypy --pretty ."
+    silent: true
+  test:
+    # Hidden to avoid showing in task list, run `task --list-all` to see it
+    # desc: 🧪 [writer_agent] Run tests
+    cmds:
+      - echo "Running pytest on tests"
+      - "{{.CLEAN_PYTHON_ENV}} uv run pytest -vv ./tests/"
+    silent: true
+  test-coverage:
+    # Hidden to avoid showing in task list, run `task --list-all` to see it
+    # desc: 🧪 [writer_agent] Run tests with coverage
+    cmds:
+      - echo "Running pytest on tests"
+      - "{{.CLEAN_PYTHON_ENV}} uv run pytest -vv --cov --cov-report=html --cov-report=term --cov-report xml:.coverage.xml
+        ./tests/"
+    silent: true
+  cli:
+    desc: 🖥️ [writer_agent] Run the CLI with provided arguments
+    cmds:
+      - echo "Running CLI {{.CLI_ARGS}}"
+      - "{{.CLEAN_PYTHON_ENV}} UV_PROJECT={{.TASKFILE_DIR}} uv run cli.py {{.CLI_ARGS}}"
+    silent: true
+  dev:
+    desc: 🔨 [writer_agent] Run the development server
+    cmds:
+      - "{{.CLEAN_PYTHON_ENV}} uv run python dev.py"
+  chainlit:
+    desc: "🛝 Run the ChainLit playground"
+    cmds:
+      - echo "🛝 Starting ChainLit playground"
+      - uv sync --all-extras
+      - uv run chainlit run --host 0.0.0.0 --port 8083 -w lit.py
+  create-docker-context:
+    desc: 🐳 [writer_agent] Create the template for a local docker_context image
+    cmds:
+      - echo "Creating docker_context folder inside agent."
+      - git init docker_context_temp
+      - echo "Initializing docker_context with Dockerfile template."
+      - cd docker_context_temp && git remote add origin "https://github.com/datarobot/datarobot-user-models"
+      - cd docker_context_temp && git sparse-checkout init --cone
+      - cd docker_context_temp && git sparse-checkout set "public_dropin_environments/python311_genai_agents"
+      - cd docker_context_temp && git pull origin master
+      - cp -r docker_context_temp/public_dropin_environments/python311_genai_agents ./docker_context
+      - rm -rf docker_context_temp
+      # We need to rename these from their production variants to their local variants
+      - mv ./docker_context/Dockerfile ./docker_context/Dockerfile.prod
+      - mv ./docker_context/Dockerfile.local ./docker_context/Dockerfile
+      - echo "Docker context created inside writer_agent/docker_context"
+  build-docker-context:
+    desc: 🐳 [writer_agent] Build the Docker image
+    cmds:
+      - echo "Building Docker image"
+      - cp pyproject.toml docker_context/pyproject.toml
+      - cd docker_context && docker build --platform linux/amd64 -f Dockerfile -t writer_agent:latest .
+      - echo "Saving Docker image"
+      - docker save writer_agent:latest | gzip -1 > docker_context.tar.gz
+    silent: true

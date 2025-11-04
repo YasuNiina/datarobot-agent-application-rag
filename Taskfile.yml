@@ -1,0 +1,46 @@
+---
+# https://taskfile.dev
+version: '3'
+env:
+  ENV: testing
+dotenv: ['.env', '.env.{{.ENV}}']
+includes:
+  agent:
+    taskfile: ./writer_agent/Taskfile.yml
+    dir: ./writer_agent
+  infra:
+    taskfile: ./infra/Taskfile.yaml
+    dir: ./infra
+  frontend_web:
+    taskfile: ./frontend_web/Taskfile.yaml
+    dir: ./frontend_web
+  web:
+    taskfile: ./web/Taskfile.yaml
+    dir: ./web
+tasks:
+  default:
+    desc: "ℹ️ Show all available tasks (run `task --list-all` to see hidden tasks)"
+    cmds:
+      - task --list --sort none
+    silent: true
+
+  lint:
+    desc: "🧹 Run linters"
+    cmds:
+      - task: agent:lint
+      - task: infra:lint
+      - task: frontend_web:lint
+      - task: web:lint
+
+  install:
+    desc: "🛠️ Install all dependencies for agent and infra"
+    cmds:
+      - task: agent:install
+      - task: infra:install
+      - task: frontend_web:install
+      - task: web:install
+
+  deploy:
+    desc: "🚀 Deploy all services"
+    cmds:
+      - task: infra:up

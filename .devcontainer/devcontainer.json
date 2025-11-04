@@ -1,0 +1,18 @@
+{
+	"name": "Application Framework Studio Devcontainer",
+	"build": {
+		"dockerfile": "Dockerfile"
+	},
+    "features": {
+        "ghcr.io/devcontainers/features/node:1": {}
+    },
+    "customizations": {
+        "jetbrains": {
+            "plugins": [
+                "lechuck.intellij-plugin.task"
+            ],
+            "backend": "pycharm"
+        }
+    },
+    "forwardPorts": [51164, 8083, 8080, 8842]
+}
