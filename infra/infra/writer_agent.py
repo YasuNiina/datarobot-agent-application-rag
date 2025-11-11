@@ -19,7 +19,6 @@ from typing import cast
 import datarobot as dr
 import pulumi
 import pulumi_datarobot
-from datarobot_pulumi_utils.pulumi import export
 from datarobot_pulumi_utils.pulumi.custom_model_deployment import CustomModelDeployment
 from datarobot_pulumi_utils.pulumi.stack import PROJECT_NAME
 from datarobot_pulumi_utils.schema.custom_models import (
@@ -32,7 +31,7 @@ from . import project_dir, use_case
 
 from .llm import custom_model_runtime_parameters as llm_custom_model_runtime_parameters
 
-DEFAULT_EXECUTION_ENVIRONMENT = "[DataRobot] Python 3.11 GenAI Agents"
+DEFAULT_EXECUTION_ENVIRONMENT = "Python 3.11 GenAI Agents"
 
 EXCLUDE_PATTERNS = [
     re.compile(pattern)
@@ -136,7 +135,7 @@ if len(os.environ.get("DATAROBOT_DEFAULT_EXECUTION_ENVIRONMENT", "")) > 0:
         "DATAROBOT_DEFAULT_EXECUTION_ENVIRONMENT"
     ]
 
-    if writer_agent_execution_environment_id == DEFAULT_EXECUTION_ENVIRONMENT:
+    if DEFAULT_EXECUTION_ENVIRONMENT in writer_agent_execution_environment_id:
         pulumi.info(
             "Using default GenAI Agents execution environment "
             + writer_agent_execution_environment_id
@@ -299,16 +298,20 @@ if os.environ.get("AGENT_DEPLOY") != "0":
         lambda id: f"{id}"
     )
     writer_agent_deployment_endpoint = writer_agent_agent_deployment.id.apply(
-        lambda id: f"{os.getenv('DATAROBOT_ENDPOINT')}/deployments/{id}/chat/completions"
+        lambda id: f"{os.getenv('DATAROBOT_ENDPOINT')}/deployments/{id}"
     )
-
-    export(
+    writer_agent_deployment_endpoint_chat_completions = (
+        writer_agent_deployment_endpoint.apply(
+            lambda endpoint: f"{endpoint}/chat/completions"
+        )
+    )
+    pulumi.export(
         writer_agent_application_name.upper() + "_DEPLOYMENT_ID",
         writer_agent_agent_deployment.id,
     )
     pulumi.export(
-        "Agent Deployment Chat Endpoint " + writer_agent_asset_name,
-        writer_agent_deployment_endpoint,
+        "Agent Deployment Chat Completions Endpoint " + writer_agent_asset_name,
+        writer_agent_deployment_endpoint_chat_completions,
     )
 
 writer_agent_app_runtime_parameters = [

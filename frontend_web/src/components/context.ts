@@ -24,6 +24,8 @@ export const ChatContext = createContext<AgUiChatReturn>({
   setInitialState: () => {},
   progress: {},
   setProgress: () => {},
+  runningAgent: {},
+  setRunningAgent: () => {},
   /*methods*/
   sendMessage: () => Promise.resolve(),
   registerOrUpdateTool: () => {},

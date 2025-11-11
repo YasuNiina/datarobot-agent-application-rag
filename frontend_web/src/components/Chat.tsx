@@ -1,7 +1,7 @@
 import { type PropsWithChildren, useEffect } from 'react';
 import { ChatMessages } from '@/components/ChatMessages';
 import { ChatTextInput } from '@/components/ChatTextInput';
-import type { MessageResponse } from '@/api-state/chats/api-requests';
+import type { MessageResponse } from '@/api/chat/types';
 import { ChatProgress } from '@/components/ChatProgress';
 import { useChatContext } from '@/hooks/use-chat-context';
 

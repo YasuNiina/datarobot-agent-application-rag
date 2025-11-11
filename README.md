@@ -40,9 +40,11 @@ within DataRobot.
 # Table of contents
 
 - [Installation](#installation)
-- [Create and deploy your agent](#create-and-deploy-your-agent)
+- [Run your agent](#run-your-agent)
 - [Develop your agent](#develop-your-agent)
+- [Deploy your agent](#deploy-your-agent)
 - [Get help](#get-help)
+
 
 # Installation
 
@@ -52,183 +54,221 @@ within DataRobot.
 
 > If you are using Windows, consider using a [DataRobot codespace](https://docs.datarobot.com/en/docs/workbench/wb-notebook/codespaces/index.html), Windows Subsystem for Linux (WSL), or a virtual machine running a supported OS.
 
+## Prerequisite tools
+
 Ensure you have the following tools installed and on your system at the required version (or newer).
 It is **recommended to install the tools system-wide** rather than in a virtual environment to ensure they are available in your terminal session.
 
-## Prerequisite tools
-
-The following tools are required to install and run the agent templates.
-For detailed installation steps, see [Installation instructions](https://docs.datarobot.com/en/docs/agentic-ai/agentic-develop/agentic-install.html#installation-instructions) in the DataRobot documentation.
+The following tools are required to install and run the agent application template.
+For detailed installation instructions, see [Installation instructions](https://docs.datarobot.com/en/docs/agentic-ai/agentic-develop/agentic-install.html#installation-instructions) in the DataRobot documentation.
 
 | Tool         | Version    | Description                     | Installation guide            |
 |--------------|------------|---------------------------------|-------------------------------|
+| **dr-cli**   | >= 0.1.8   | The DataRobot CLI.              | [dr-cli installation guide](https://github.com/datarobot-oss/cli?tab=readme-ov-file#installation) |
 | **git**      | >= 2.30.0  | A version control system.       | [git installation guide](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) |
 | **uv**       | >= 0.6.10  | A Python package manager.       | [uv installation guide](https://docs.astral.sh/uv/getting-started/installation/)     |
 | **Pulumi**   | >= 3.163.0 | An Infrastructure as Code tool. | [Pulumi installation guide](https://www.pulumi.com/docs/iac/download-install/)        |
-| **Taskfile** | >= 3.43.3  | A task runner.                  | [Taskfile installation guide](https://taskfile.dev/docs/installation)                  |
+| **Taskfile** | >= 3.43.3  | A task runner.                  | [Taskfile installation guide](https://taskfile.dev/docs/installation)                 |
+| **NodeJS**   | >= 24      | JavaScript runtime for frontend development. | [NodeJS installation guide](https://nodejs.org/en/download/)                |
 
 > **IMPORTANT**: You will also need a compatible C++ compiler and build tools installed on your system to compile some Python packages.
 
-# Create and deploy your agent
+### Development Container (experimental)
+
+[devcontainers](https://containers.dev/) allows using a container environment for local development experience. It is integrated with
+[modern IDEs, such as VSCode and PyCharm](https://containers.dev/supporting), and [Dev Container CLI](https://containers.dev/supporting#devcontainer-cli) allows you to integrate it with Terminal-centric development experience.
+
+> This can also be used as a solution for Windows development.
 
 ```diff
--IMPORTANT: Ensure all prerequisites are installed before proceeding.
+-[Docker Desktop](https://docs.docker.com/desktop/) is the recomended backend for running devcontainers, but any docker-compatible backend is supported.
 ```
 
-This guide walks you through setting up an agentic workflow using one of several provided templates.
-It returns a Markdown (`.md`) document about your specified topic based on the research of a series of agents.
-The example workflow contains these 3 agents:
+This template offers a devcontainer with all pre-requisites installed. To start working in it, simply open the template in PyCharm (version >= 2023.2, Pro) or VSCode, and IDE will prompt you to re-open in a container:
 
-- **Researcher**: Gathers information on a given topic using web search.
-- **Writer**: Creates a document based on the research.
-- **Editor**: Reviews and edits the document for clarity and correctness.
+![Open in Dev Container PyCharm](docs/img/pycharm-devcontainer.png)
 
-## Clone the agent template repository
+![Open in Dev Container VSCode](docs/img/vscode-devcontainer.png)
 
-The method for cloning the repository is dependent on whether your DataRobot application instance&mdash;either Managed SaaS (cloud) or Self-Managed (on-premise).
 
-### Cloud users
+If you work directly in the terminal, do:
 
-You can either clone the repository to your local machine using Git or [download it as a ZIP file](https://github.com/datarobot-community/datarobot-agent-templates/archive/refs/heads/main.zip).
-
-```bash
-git clone https://github.com/datarobot-community/datarobot-agent-templates.git
-cd datarobot-agent-templates
+```shell
+devcontainer up --workspace-folder .
+devcontainer exec --workspace-folder . /bin/sh
 ```
 
-### On-premise users
+## Prepare application
 
-Clone the release branch for your installation using Git, replacing `[YOUR_DATA_ROBOT_VERSION]` with the version of DataRobot you are using:
+As the last step, do `task start` to prepare you local development environment. An interactive wizard will guide you though selection of
+configuration options
 
-```bash
-git clone -b release/[YOUR_DATA_ROBOT_VERSION] https://github.com/datarobot-community/datarobot-agent-templates.git
-cd datarobot-agent-templates
+<details>
+
+<summary>☂️ Configuration options explained</summary>
+
+## LLM configuration
+
+Agentic Application supports multiple flexible LLM options including:
+
+- LLM Blueprint with LLM Gateway (default)
+- LLM Blueprint with an External LLM
+- Already Deployed Text Generation model in DataRobot
+
+### LLM Configuration Recommended Option
+
+You can edit the LLM configuration by manually changing which configuration is active.
+Simply run:
+
+```sh
+ln -sf ../configurations/<chosen_configuration> infra/infra/llm.py
 ```
 
-> **NOTE**: To customize or track your own workflows, you can 
-> [fork this repository](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo), 
-> [change the remote URL](https://docs.github.com/en/get-started/git-basics/managing-remote-repositories), or 
-> [create a new repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-new-repository).
+After doing so, you'll likely want to edit the llm.py to have the correct model selected. Particularly
+for non-LLM Gateway options.
 
-## Locate your DataRobot API key and endpoint
+### LLM Configuration Alternative Option
 
-The section after this requires you to add your DataRobot API key and endpoint to the environment variables file.
-See the [DataRobot API keys and endpoints](https://docs.datarobot.com/en/docs/get-started/acct-mgmt/acct-settings/api-key-mgmt.html) documentation for specific steps on how to locate them.
+If you want to do it dynamically, you can set it as a configuration value with:
 
-## Configure environment variables
-
-Create an `.env` file in the root directory before running any commands:
-
-1. Copy the template environment file.
-
-  ```bash
-  cp .env.template .env
-  ```
-
-2. Edit the file with your preferred text editor.
-
-  ```bash
-  nano .env  # or vim .env, code .env, etc.
-  ```
-
-3. Paste the DataRobot API key and endpoint that you copied in [Locate your DataRobot API key and endpoint](#locate-your-datarobot-api-key-and-endpoint) into your `.env` file. Leave other variables at their default values during setup.
-
-```bash
-# Your DataRobot API token.
-# Refer to https://docs.datarobot.com/en/docs/api/api-quickstart/index.html#configure-your-environment for help.
-DATAROBOT_API_TOKEN=<YOUR_API_KEY>
-
-# The URL of your DataRobot instance API.
-DATAROBOT_ENDPOINT=<YOUR_API_ENDPOINT>
+```sh
+INFRA_ENABLE_LLM=<chosen_configuration>
 ```
 
-## Install and start your agent
+from the list of options in the `infra/configurations/llm` folder.
 
-Run the script to install all your agent's dependencies:
+Here are some examples of each configuration using the dynamic option described above:
 
-```bash
-task install
+#### LLM Blueprint with LLM Gateway (default)
+
+Default option is LLM Gateway if not specified in your `.env` file.
+
+```sh
+INFRA_ENABLE_LLM=blueprint_with_llm_gateway.py
 ```
 
-## Deploy your agent
+#### Existing LLM Deployment in DataRobot
 
-Next, deploy your agent to DataRobot, which requires a Pulumi login.
-If you do not have one, use `pulumi login --local` for local login or create a free account at [the Pulumi website](https://app.pulumi.com/signup).
+Uncomment and configure these in your `.env` file:
 
-```bash
-task deploy
+```sh
+TEXTGEN_DEPLOYMENT_ID=<your_deployment_id>
+INFRA_ENABLE_LLM=deployed_llm.py
 ```
 
-During the deploy process, you will be asked to provide a **Pulumi stack name** (e.g., `myagent`, `test`, etc.) to identify your DataRobot resources.
-Once you have provided one, the deploy process provides a preview link.
-Review the Pulumi preview and approve changes by typing `yes` or pressing `Enter`.
+#### External LLM Provider
 
-> **NOTE**: If prompted to perform an update, select `yes` and press `Enter`.
+Configure an LLM with an external LLM provider like Azure, Bedrock, Anthropic, or VertexAI. Here's an Azure AI example:
 
-Deployment takes several minutes.
-When complete, a resource summary with important IDs/URLs is displayed:
-
-```bash
-Outputs:
-    AGENT_CREWAI_DEPLOYMENT_ID                                    : "1234567890abcdef"
-    Agent Custom Model Chat Endpoint [agentic-test] [agent_crewai]: "https://[YOUR_DATAROBOT_ENDPOINT]/api/v2/genai/agents/fromCustomModel/1234567890abcdef/chat/"
-    Agent Deployment Chat Endpoint [agentic-test] [agent_crewai]  : "https://[YOUR_DATAROBOT_ENDPOINT]/api/v2/deployments/1234567890abcdef/chat/completions"
-    Agent Execution Environment ID [agentic-test] [agent_crewai]  : "68fbc0eab1af04e6982ff7b1"
-    Agent Playground URL [agentic-test] [agent_crewai]            : "https://[YOUR_DATAROBOT_ENDPOINT]/usecases/68fbc0eafb98d9d6d59c65db/agentic-playgrounds/1234567890abcdef/comparison/chats"
-    LLM_DEFAULT_MODEL                                             : "datarobot/azure/gpt-4o-mini"
-    USE_DATAROBOT_LLM_GATEWAY                                     : "1"
-
-Resources:
-    + 10 created
-
-Duration: 2m12s
-
+```sh
+INFRA_ENABLE_LLM=blueprint_with_external_llm.py
+LLM_DEFAULT_MODEL="azure/gpt-4o"
+OPENAI_API_VERSION='2024-08-01-preview'
+OPENAI_API_BASE='https://<your_custom_endpoint>.openai.azure.com'
+OPENAI_API_DEPLOYMENT_ID='<your deployment_id>'
+OPENAI_API_KEY='<your_api_key>'
 ```
 
-### Find your deployment ID
+See the [DataRobot documentation](https://docs.datarobot.com/en/docs/gen-ai/playground-tools/deploy-llm.html) for details on other providers.
 
-The deployment ID is displayed in the terminal output after running `task deploy`.
-In the example output at the end of the previous section, the deployment ID is `1234567890abcdef`.
+In addition to the changes for the `.env` file, you can also edit the respective llm.py file to make additional changes
+such as the default LLM, temperature, top_p, etc within the chosen configuration
 
-For more details, see [Model information](https://docs.datarobot.com/en/docs/mlops/deployment/deploy-methods/add-deploy-info.html#model-information) in the DataRobot documentation.
 
-## Test your deployed agent
+## OAuth Applications
 
-Use the CLI to test your deployed agent.
-In the following command, replace <YOUR_DEPLOYMENT_ID> with your actual deployment ID from the previous step:
+The template can work with files stored in Google Drive and Box.
+In order to give it access to those files, you need to configure OAuth Applications.
 
-```bash
-task agent:cli -- execute-deployment --user_prompt 'Tell me about Generative AI' --deployment_id <YOUR_DEPLOYMENT_ID>
+### Google OAuth Application
+
+- Go to [Google API Console](https://console.developers.google.com/) from your Google account
+- Navigate to "APIs & Services" > "Enabled APIs & services" > "Enable APIs and services" search for Drive, and add it.
+- Navigate to "APIs & Services" > "OAuth consent screen" and make sure you have your consent screen configured. You may have both "External" and "Internal" audience types.
+- Navigate to "APIs & Services" > "Credentials" and click on the "Create Credentials" button. Select "OAuth client ID".
+- Select "Web application" as Application type, fill in "Name" & "Authorized redirect URIs" fields. For example, for local development, the redirect URL will be:
+  - `http://localhost:5173/oauth/callback` - local vite dev server (used by frontend folks)
+  - `http://localhost:8080/oauth/callback` - web-proxied frontend
+  - `http://localhost:8080/api/v1/oauth/callback/` - the local web API (optional).
+  - For production, you'll want to add your DataRobot callback URL. For example, in US Prod it is `https://app.datarobot.com/custom_applications/{appId}/oauth/callback`. For any installation of DataRobot it is `https://<datarobot-endpoint>/custom_applications/{appId}/oauth/callback`.
+- Hit the "Create" button when you are done.
+- Copy the "Client ID" and "Client Secret" values from the created OAuth client ID and set them in the template env variables as `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` correspondingly.
+- Make sure you have the "Google Drive API" enabled in the "APIs & Services" > "Library" section. Otherwise, you will get 403 errors.
+- Finally, go to "APIs & Services" > "OAuth consent screen" > "Data Access" and make sure you have the following scopes selected:
+  - `openid`
+  - `https://www.googleapis.com/auth/userinfo.email`
+  - `https://www.googleapis.com/auth/userinfo.profile`
+  - `https://www.googleapis.com/auth/drive.readonly`
+
+### Box OAuth Application
+
+- Head to [Box Developer Console](https://app.box.com/developers/console) from your Box account
+- Create a new platform application, then select "Custom App" type
+- Fill in "Application Name" and select "Purpose" (e.g. "Integration"). Then, fill in three more info fields. The actual selection doesn't matter.
+- Select "User Authentication (OAuth 2.0)" as Authentication Method and click on the "Create App" button
+- In the "OAuth 2.0 Redirect URIs" section, please fill in callback URLs you want to use.
+  - `http://localhost:5173/oauth/callback` - local vite dev server (used by frontend folks)
+  - `http://localhost:8080/oauth/callback` - web-proxied frontend
+  - `http://localhost:8080/api/v1/oauth/callback/` - the local web API (optional).
+  - For production, you'll want to add your DataRobot callback URL. For example, in US Prod it is `https://app.datarobot.com/custom_applications/{appId}/oauth/callback`.
+- Hit "Save Changes" after that.
+- Under the "Application Scopes", please make sure you have both `Read all files and folders stored in Box` and "Write all files and folders store in Box" checkboxes selected. We need both because we need to "write" to the log that we've downloaded the selected files.
+- Finally, under the "OAuth 2.0 Credentials" section, you should be able to find your Client ID and Client Secret pair to setup in the template env variables as `BOX_CLIENT_ID` and `BOX_CLIENT_SECRET` correspondingly.
+
+After you've set those in your project `.env` file, on the next Pulumi Up, we'll create OAuth
+providers in your DataRobot installation. To view and manage those and verify they are working
+navigate to `<your_datarobot_url>/account/oauth-providers` or in US production: https://app.datarobot.com/account/oauth-providers.
+
+Additionally, the Pulumi output variables get used to populate those providers for your Codespace and
+local development environment as well.
+
+</details>
+
+
+# Run your agent
+
+## Option 1: autoreload for backend, static frontend
+
+Build the frontend:
+```shell
+task frontend_web:build
 ```
 
-> **NOTE**: The command may take a few minutes to complete.
+Start the application:
 
-Once the repsonse has been processed, the response displays.
-The output below is an example, but your actual response will vary.
-
-```bash
-Execution result preview:
-{
-  "id": "f47cb925-39e0-4507-a843-5aa8b9420b01",
-  "choices": "[Truncated for display]",
-  "created": 1762448266,
-  "model": "datarobot-deployed-llm",
-  "object": "chat.completion",
-  "service_tier": null,
-  "system_fingerprint": null,
-  "usage": {
-    "completion_tokens": 0,
-    "prompt_tokens": 0,
-    "total_tokens": 0,
-    "completion_tokens_details": null,
-    "prompt_tokens_details": null
-  },
-  "datarobot_association_id": "461e6489-505b-43f9-84c3-3832ef0e3a25",
-  "pipeline_interactions": "[Truncated for display]"
-}
+```shell
+task web:dev
 ```
 
-## Develop your agent
+Start the writer agent:
+
+```shell
+task writer_agent:dev
+```
+
+And go to http://localhost:8080.
+
+## Option 2: autoreload for all components
+
+Instead of `task frontend_web:build` do `task frontend_web:dev`, and go to http://localhost:5173/
+
+## Option 3 (experimental): just agent playground
+
+If you want to test just the agent without application you can do:
+
+```shell
+
+task writer_agent:dev
+```
+
+then:
+```shell
+task writer_agent:chainlit
+```
+
+This will start a separate frontend application just for your local agent at http://localhost:8083/.
+
+# Develop your agent
 
 Once setup is complete, you are ready customize your agent, allowing you to add your own logic and functionality to the agent.
 See the following documentation for more details:
@@ -238,6 +278,16 @@ See the following documentation for more details:
 - [Configure LLM providers](https://docs.datarobot.com/en/docs/agentic-ai/agentic-develop/agentic-llm-providers.html)
 - [Use the agent CLI](https://docs.datarobot.com/en/docs/agentic-ai/agentic-develop/agentic-cli-guide.html)
 - [Add Python requirements](https://docs.datarobot.com/en/docs/agentic-ai/agentic-develop/agentic-python-packages.html)
+
+# Deploy your agent
+
+After you tested your agent locally, just run
+
+```shell
+task deploy
+```
+
+to deploy it to DataRobot.
 
 # Get help
 

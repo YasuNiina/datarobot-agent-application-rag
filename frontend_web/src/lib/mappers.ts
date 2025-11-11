@@ -7,7 +7,7 @@ import type {
   ToolCallEndEvent,
 } from '@ag-ui/core';
 import { EventType } from '@ag-ui/core';
-import type { MessageResponse } from '@/api-state/chats/api-requests';
+import type { MessageResponse } from '@/api/chat/types';
 
 type AgUiTextEvent =
   | TextMessageStartEvent

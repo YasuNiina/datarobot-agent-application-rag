@@ -21,6 +21,7 @@ import logging
 logging.getLogger("opentelemetry.instrumentation.instrumentor").setLevel(logging.ERROR)
 
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 from opentelemetry.instrumentation.aiohttp_client import AioHttpClientInstrumentor
 from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
@@ -45,7 +46,7 @@ os.environ["DEEPEVAL_TELEMETRY_OPT_OUT"] = "YES"
 # ------------------------------------------------------------------------------
 
 
-from typing import AsyncGenerator, Iterator, Union, cast
+from typing import Any, AsyncGenerator, Iterator, Union, cast
 
 from datarobot_drum import RuntimeParameters
 from datarobot_genai.core.chat import (
@@ -85,17 +86,20 @@ def maybe_set_env_from_runtime_parameters(key: str) -> None:
         pass
 
 
-def load_model(code_dir: str) -> str:
+def load_model(code_dir: str) -> tuple[ThreadPoolExecutor, asyncio.AbstractEventLoop]:
     """The agent is instantiated in this function and returned."""
-    _ = code_dir
-    return "success"
+    thread_pool_executor = ThreadPoolExecutor(1)
+    event_loop = asyncio.new_event_loop()
+    thread_pool_executor.submit(asyncio.set_event_loop, event_loop).result()
+    return (thread_pool_executor, event_loop)
 
 
 def chat(
     completion_create_params: CompletionCreateParams
     | CompletionCreateParamsNonStreaming
     | CompletionCreateParamsStreaming,
-    model: str,
+    load_model_result: tuple[ThreadPoolExecutor, asyncio.AbstractEventLoop],
+    **kwargs: Any,
 ) -> Union[CustomModelChatResponse, Iterator[CustomModelStreamingResponse]]:
     """When using the chat endpoint, this function is called.
 
@@ -118,35 +122,29 @@ def chat(
             ...
         )
     """
-    _ = model
-    # Initialize the authorization context for downstream agents and tools to retrieve
-    # access tokens for external services.
-    initialize_authorization_context(completion_create_params)
+    thread_pool_executor, event_loop = load_model_result
 
     # Change working directory to the directory containing this file.
     # Some agent frameworks expect this for expected pathing.
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-    # Load MCP runtime parameters if configured
+    # Load MCP runtime parameters and session secret if configured
     maybe_set_env_from_runtime_parameters("EXTERNAL_MCP_URL")
     maybe_set_env_from_runtime_parameters("MCP_DEPLOYMENT_ID")
+    maybe_set_env_from_runtime_parameters("SESSION_SECRET_KEY")
+
+    # Initialize the authorization context for downstream agents and tools to retrieve
+    # access tokens for external services.
+    initialize_authorization_context(completion_create_params)
 
     # Instantiate the agent, all fields from the completion_create_params are passed to the agent
     # allowing environment variables to be passed during execution
     agent = MyAgent(**completion_create_params)
-    # Ensure there is an event loop available; create one in non-main threads
-    try:
-        event_loop = asyncio.get_running_loop()
-    except RuntimeError:
-        try:
-            event_loop = asyncio.get_event_loop()
-        except RuntimeError:
-            event_loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(event_loop)
     # Invoke the agent and check if it returns a generator or a tuple
-    result = event_loop.run_until_complete(
-        agent.invoke(completion_create_params=completion_create_params)
-    )
+    result = thread_pool_executor.submit(
+        event_loop.run_until_complete,
+        agent.invoke(completion_create_params=completion_create_params),
+    ).result()
 
     # Check if the result is a generator (streaming response)
     if isinstance(result, AsyncGenerator):
@@ -154,7 +152,10 @@ def chat(
         return cast(
             Iterator[CustomModelStreamingResponse],
             to_custom_model_streaming_response(
-                event_loop, result, model=completion_create_params.get("model")
+                thread_pool_executor,
+                event_loop,
+                result,
+                model=completion_create_params.get("model"),
             ),
         )
     else:

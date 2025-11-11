@@ -49,5 +49,6 @@ header:
     - '**/*.json'
     - '**/*.md'
     - '**/py.typed'
+    - '**/.datarobot/**'
 
   comment: on-failure

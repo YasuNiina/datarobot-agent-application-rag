@@ -14,9 +14,11 @@
 
 from fastapi import APIRouter
 
-from .writer_agent import writer_agent_router
+from .auth import auth_router
+from .chat import chat_router
 
 router = APIRouter(prefix="/v1")
 
 
-router.include_router(writer_agent_router)
+router.include_router(chat_router)
+router.include_router(auth_router)

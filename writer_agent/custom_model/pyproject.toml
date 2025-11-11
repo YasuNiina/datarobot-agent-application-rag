@@ -7,7 +7,7 @@ requires-python = ">=3.10, <3.13"
 dependencies = [
     "click>=8.1.8",
     "datarobot-drum>=1.17.5",
-    "datarobot-genai[langgraph]>=0.1.18",
+    "datarobot-genai[langgraph]>=0.1.22",
     "opentelemetry-api>=1.33.0,<2.0.0",
     "opentelemetry-instrumentation-aiohttp-client>=0.54b0",
     "opentelemetry-instrumentation-httpx>=0.54b0",

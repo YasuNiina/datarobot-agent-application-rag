@@ -18,6 +18,5 @@ export function createAgent({
     agentId: threadId,
     initialMessages,
     initialState,
-    // headers: { Authorization: 'Bearer token' },
   });
 }

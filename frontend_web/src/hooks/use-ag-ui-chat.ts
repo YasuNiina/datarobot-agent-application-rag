@@ -20,11 +20,12 @@ import {
   createToolMessageFromAgUiEvent,
 } from '@/lib/mappers';
 import type { ChatProviderInput } from '@/components/ChatProvider';
-import type { MessageResponse } from '@/api-state/chats/api-requests';
-import { useFetchHistory } from '@/api-state/chats';
+import type { MessageResponse } from '@/api/chat/types';
+import { useFetchHistory } from '@/api/chat';
 import type { Tool, ToolSerialized } from '@/types/tools';
 import type { ProgressState } from '@/types/progress';
 import { isProgressDone, isProgressError, isProgressStart } from '@/types/events';
+import { getApiUrl } from '@/lib/utils';
 
 export type UseAgUiChatParams = ChatProviderInput;
 
@@ -42,9 +43,13 @@ export function useAgUiChat({
   const [initialMessages, setInitialMessages] = useState<MessageResponse[]>([]);
   const [initialState, setInitialState] = useState<any>({});
   const [progress, setProgress] = useState<ProgressState>({});
+  const [runningAgent, setRunningAgent] = useState(false);
   const toolHandlersRef = useRef<
     Record<string, Pick<Tool<any>, 'handler' | 'render' | 'renderAndWait'>>
   >({});
+  if (!chatId) {
+    chatId = 'main';
+  }
 
   const {
     data: history,
@@ -52,8 +57,11 @@ export function useAgUiChat({
     refetch: refetchHistory,
   } = useFetchHistory({ chatId });
 
+  const baseApiUrl = useMemo(getApiUrl, []);
+  const agUIUrl = new URL(agUiEndpoint, baseApiUrl).href;
+
   const agent = useMemo(() => {
-    return createAgent({ url: agUiEndpoint, threadId: chatId });
+    return createAgent({ url: agUIUrl, threadId: chatId });
   }, [chatId]);
 
   const agentRef = useRef(agent);
@@ -73,6 +81,7 @@ export function useAgUiChat({
     setMessages([]);
     setMessage(null);
     setProgress({});
+    setRunningAgent(false);
     return () => {
       if (unsubscribeRef.current) {
         unsubscribeRef.current();
@@ -87,7 +96,7 @@ export function useAgUiChat({
     const historyMessage = createTextMessageFromUserInput(message, chatId);
     setMessages(state => [...state, historyMessage]);
     setUserInput('');
-
+    setRunningAgent(true);
     const { unsubscribe } = agent.subscribe({
       onTextMessageStartEvent(params: { event: TextMessageStartEvent } & AgentSubscriberParams) {
         setMessage(createTextMessageFromAgUiEvent(params.event));
@@ -107,6 +116,7 @@ export function useAgUiChat({
         console.debug('onTextMessageEndEvent', params);
         setMessages(state => [...state, messageRef.current!]);
         setMessage(null);
+        setRunningAgent(false);
       },
       onToolCallStartEvent(params) {
         console.debug('onToolCallStartEvent', params);
@@ -180,6 +190,7 @@ export function useAgUiChat({
         if (params.event.rawEvent?.name === 'AbortError') {
           return;
         }
+        setRunningAgent(false);
         setMessages(state => [
           ...state,
           {
@@ -270,6 +281,8 @@ export function useAgUiChat({
     setInitialState,
     progress,
     setProgress,
+    runningAgent,
+    setRunningAgent,
     /*methods*/
     sendMessage,
     registerOrUpdateTool,

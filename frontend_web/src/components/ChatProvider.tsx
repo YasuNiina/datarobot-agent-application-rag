@@ -1,7 +1,7 @@
 import { type PropsWithChildren } from 'react';
 import { useAgUiChat } from '@/hooks/use-ag-ui-chat';
 import { ChatContext } from './context';
-import { useFetchChats } from '@/api-state/chats';
+import { useFetchChats } from '@/api/chat';
 
 export type ChatProviderInput = {
   agUiEndpoint: string;

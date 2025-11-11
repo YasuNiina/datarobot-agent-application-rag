@@ -11,6 +11,37 @@ body {
   height: 100%;
 }
 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+  font-weight: bold;
+}
+
+h1 {
+  font-size: 2em;
+}
+h2 {
+  font-size: 1.75em;
+}
+h3 {
+  font-size: 1.5em;
+}
+h4 {
+  font-size: 1.25em;
+}
+h5 {
+  font-size: 1.1em;
+}
+h6 {
+  font-size: 1em;
+}
+
 .app {
   display: flex;
   width: 100%;
@@ -34,17 +65,18 @@ body {
         flex-direction: column;
         flex-grow: 1;
         min-width: 0;
-
-        .messages-scroll {
-          flex: 1;
-          overflow-y: auto;
-          overflow-x: hidden;
-          min-height: 0;
-        }
+        overflow-y: auto;
+        max-width: 100vw;
 
         .message {
           text-wrap: wrap;
           line-break: anywhere;
+        }
+
+        .markdown-block {
+          border-radius: 0.5rem;
+          padding: 0.5rem;
+          overflow: scroll;
         }
       }
 

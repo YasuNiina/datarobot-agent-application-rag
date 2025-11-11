@@ -8,6 +8,7 @@ import type {
 } from '@/types/message';
 import { memo, useMemo } from 'react';
 import { useChatContext } from '@/hooks/use-chat-context';
+import ReactMarkdown from 'react-markdown';
 
 interface ChatMessageProps {
   id: string;
@@ -19,6 +20,7 @@ interface ChatMessageProps {
   // TODO?
   // content: MessageContent | string;
 }
+const MarkdownRegExp = /^```markdown\s*|\s*```$/g;
 
 export function UniversalContentPart({ part }: { part: ContentPart }) {
   if (part.type === 'text') {
@@ -30,8 +32,33 @@ export function UniversalContentPart({ part }: { part: ContentPart }) {
   return null;
 }
 
+const MarkdownBlock = memo(({ block, index }: { block: string; index: number }) => {
+  if (block.startsWith('```markdown')) {
+    const inner = block.replace(MarkdownRegExp, '');
+    return (
+      <div key={index} className="markdown-block">
+        <pre>
+          <code>
+            <ReactMarkdown>{inner}</ReactMarkdown>
+          </code>
+        </pre>
+      </div>
+    );
+  } else {
+    return <ReactMarkdown key={index}>{block}</ReactMarkdown>;
+  }
+});
+
+// TODO: think about splitting content to smaller parts for better caching
 export function TextContentPart({ part }: { part: TextUIPart }) {
-  return <div>{part.text}</div>;
+  const blocks = part.text.split(/(```markdown[\s\S]*?```)/g);
+  return (
+    <>
+      {blocks.map((block, i) => (
+        <MarkdownBlock key={i} block={block} index={i} />
+      ))}
+    </>
+  );
 }
 
 export function ToolInvocationPart({ part }: { part: ToolInvocationUIPart }) {

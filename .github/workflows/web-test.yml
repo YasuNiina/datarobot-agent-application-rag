@@ -29,7 +29,7 @@ jobs:
 
       # Ref: https://docs.astral.sh/uv/guides/integration/github/#installation
       - name: Setup uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@v6
         with:
           working-directory: web
           enable-cache: true
@@ -49,6 +49,14 @@ jobs:
       - name: Run Static Checks
         working-directory: web
         run: task lint-check
+
+      - name: Install Frontend Dependencies
+        working-directory: frontend_web
+        run: task install
+
+      - name: Build static Frontend files
+        working-directory: frontend_web
+        run: task build
 
       - name: Test
         working-directory: web

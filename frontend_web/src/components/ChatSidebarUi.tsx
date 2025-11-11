@@ -10,14 +10,15 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MessageSquare, MessageSquareText, MoreHorizontal, Plus } from 'lucide-react';
+import { MessageSquare, MessageSquareText, MoreHorizontal, Plus, Settings } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import type { ChatResponse } from '@/api-state/chats/api-requests';
+import type { ChatResponse } from '@/api/chat/types';
+import { useNavigate } from 'react-router-dom';
 
 export interface ChatSidebarProps {
   isLoading: boolean;
@@ -36,10 +37,20 @@ export function ChatSidebarUi({
   onChatCreate,
   onChatDelete,
 }: ChatSidebarProps) {
+  const navigate = useNavigate();
+  const goToSettings = () => navigate('/settings');
   return (
     <Sidebar>
       <SidebarContent>
         <SidebarGroup>
+          <SidebarMenuItem key="open-settings">
+            <SidebarMenuButton disabled={isLoading} asChild onClick={goToSettings}>
+              <div>
+                <Settings />
+                <span>Settings</span>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarGroupLabel>Chats</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>

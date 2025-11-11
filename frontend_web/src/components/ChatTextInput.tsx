@@ -8,9 +8,15 @@ export interface ChatTextInputProps {
   onSubmit: (text: string) => any;
   userInput: string;
   setUserInput: Dispatch<SetStateAction<string>>;
+  runningAgent: boolean;
 }
 
-export function ChatTextInput({ onSubmit, userInput, setUserInput }: ChatTextInputProps) {
+export function ChatTextInput({
+  onSubmit,
+  userInput,
+  setUserInput,
+  runningAgent,
+}: ChatTextInputProps) {
   function keyDownHandler(e: KeyboardEvent) {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
       e.preventDefault();
@@ -31,6 +37,7 @@ export function ChatTextInput({ onSubmit, userInput, setUserInput }: ChatTextInp
         onClick={() => onSubmit(userInput)}
         className="absolute bottom-2 right-2"
         size="icon"
+        disabled={runningAgent}
       >
         <Send />
       </Button>

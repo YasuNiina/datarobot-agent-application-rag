@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuid } from 'uuid';
-import type { ChatResponse } from '@/api-state/chats/api-requests';
-import { useDeleteChat, useFetchChats } from '@/api-state/chats';
+import type { ChatResponse } from '@/api/chat/types';
+import { useDeleteChat, useFetchChats } from '@/api/chat';
 
 export type UseChatListParams = { chatId: string; setChatId: (id: string) => void };
 

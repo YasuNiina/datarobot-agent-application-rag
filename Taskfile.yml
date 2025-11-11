@@ -5,7 +5,7 @@ env:
   ENV: testing
 dotenv: ['.env', '.env.{{.ENV}}']
 includes:
-  agent:
+  writer_agent:
     taskfile: ./writer_agent/Taskfile.yml
     dir: ./writer_agent
   infra:
@@ -17,6 +17,9 @@ includes:
   web:
     taskfile: ./web/Taskfile.yaml
     dir: ./web
+  mcp_server:
+    taskfile: ./mcp_server/Taskfile.yaml
+    dir: ./mcp_server
 tasks:
   default:
     desc: "ℹ️ Show all available tasks (run `task --list-all` to see hidden tasks)"
@@ -24,10 +27,16 @@ tasks:
       - task --list --sort none
     silent: true
 
+  start:
+    desc: "💻 Prepare local development environment"
+    cmds:
+      - dr dotenv setup
+      - task: install
+
   lint:
     desc: "🧹 Run linters"
     cmds:
-      - task: agent:lint
+      - task: writer_agent:lint
       - task: infra:lint
       - task: frontend_web:lint
       - task: web:lint
@@ -35,12 +44,40 @@ tasks:
   install:
     desc: "🛠️ Install all dependencies for agent and infra"
     cmds:
-      - task: agent:install
+      - task: writer_agent:install
       - task: infra:install
       - task: frontend_web:install
       - task: web:install
+      - task: mcp_server:install
+
+  dev:
+    desc: "🚀 Run agent, backend (web), mcp server and frontend together"
+    cmds:
+      - |
+        task mcp_server:dev &
+        sleep 3
+        task web:dev-agent &
+        sleep 5
+        task agent:dev &
+        sleep 3
+        task frontend_web:dev &
+        sleep 8
+        echo "✅ All servers started!"
+        if [[ -n "$NOTEBOOK_ID" ]]; then
+          prefix="${DATAROBOT_API_ENDPOINT//api\/v2/}notebook-sessions/$NOTEBOOK_ID/ports/"
+        else
+          prefix="http://localhost:"
+        fi
+        echo "🔗 Backend: ${prefix}8080"
+        echo "🔗 Frontend: ${prefix}5173"
+        echo "🔗 Agent: ${prefix}8842"
+        echo "🔗 MCP Server: ${prefix}9000"
+        wait
 
   deploy:
     desc: "🚀 Deploy all services"
+    env:
+      AGENT_DEPLOY: "1"
     cmds:
+      - task: mcp_server:install
       - task: infra:up

@@ -3,21 +3,8 @@
 # Configure environment
 export UV_CACHE_DIR=.uv
 
-# Get the number of CPU cores
-if [ -f /sys/fs/cgroup/cpu.max ] && ! grep -q "max" /sys/fs/cgroup/cpu.max; then
-    read -r max period < /sys/fs/cgroup/cpu.max
-    cpu_cores=$((max / period))
-else
-    cpu_cores=$(nproc)
-fi
 
-# Calculate the recommended number of workers
-workers=$((cpu_cores * 2 + 1))
+uv run python alembic_migration.py  # migrating base to the last change
 
-# Ensure at least 2 workers are started
-if [[ $workers -lt 2 ]]; then
-  workers=2
-fi
+uv run uvicorn app.main:app --host 0.0.0.0 --port 8080 --proxy-headers --timeout-keep-alive 300
 
-echo "Starting App with ${workers} workers"
-uv run uvicorn app.main:app --workers "$workers" --host 0.0.0.0 --port 8080 --proxy-headers --timeout-keep-alive 300

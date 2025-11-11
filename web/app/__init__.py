@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import json
 import logging
 import os
@@ -19,8 +18,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncGenerator
 
-import dotenv
-from core.telemetry.logging import init_logging
+from core.telemetry import configure_uvicorn_logging, init_logging
 from datarobot_asgi_middleware import DataRobotASGIMiddleware
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.responses import HTMLResponse
@@ -31,11 +29,6 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.api import router as api_router
 from app.config import Config
 from app.deps import Deps, create_deps
-
-# load dotenv locally for PyCharm
-dotenv_file = os.getenv("DOTENV_FILE")
-if dotenv_file:
-    dotenv.load_dotenv(dotenv_file)
 
 base_router = APIRouter()
 
@@ -60,12 +53,32 @@ async def health() -> dict[str, str]:
     return {"status": "healthy"}
 
 
-def get_app_base_url(api_port: str) -> str:
+def register_log_filter() -> None:
+    """
+    Removes logs from healthiness/readiness endpoints so they don't spam
+    and pollute application log flow
+    """
+
+    class EndpointFilter(logging.Filter):
+        def filter(self, record: logging.LogRecord) -> bool:
+            return (
+                record.args  # type: ignore[return-value]
+                and len(record.args) >= 3
+                and record.args[2] != "/health"  # type: ignore[index]
+            )
+
+    logging.getLogger("uvicorn.access").addFilter(EndpointFilter())
+
+
+def get_app_base_url(api_port: str | None) -> str:
     """Get and normalize the application base URL."""
     app_base_url = os.getenv("BASE_PATH", "")
     notebook_id = os.getenv("NOTEBOOK_ID", "")
     if not app_base_url and notebook_id:
-        app_base_url = f"notebook-sessions/{notebook_id}/ports/{api_port}"
+        if api_port:
+            app_base_url = f"notebook-sessions/{notebook_id}/ports/{api_port}"
+        else:
+            app_base_url = f"notebook-sessions/{notebook_id}"
 
     if app_base_url:
         return "/" + app_base_url.strip("/") + "/"
@@ -79,10 +92,6 @@ def get_manifest_assets(
     """
     Reads the Vite manifest and returns the JS and CSS files for the given entry.
     """
-    if not manifest_path.exists():
-        logger.info("No manifest file, assuming now JS or CSS files for the index pat")
-        return dict(js=[], css=[])
-
     with open(manifest_path, "r") as f:
         manifest = json.load(f)
 
@@ -102,7 +111,7 @@ def get_manifest_assets(
 
 
 def create_app(
-    title: str = "DataRobot Application",
+    title: str = "Agentic Writer",
     config: Config | None = None,
     deps: Deps | None = None,
 ) -> FastAPI:
@@ -113,6 +122,10 @@ def create_app(
         config = Config()
 
     init_logging(level=config.log_level, format_type=config.log_format)
+
+    configure_uvicorn_logging(
+        log_format=config.log_format, log_level=config.log_level.value
+    )
 
     logger.info("App is starting up.")
 
@@ -133,11 +146,10 @@ def create_app(
         session_cookie_name = config.session_cookie_name
     else:
         # Auto-generate based on base path to avoid conflicts between apps
-        api_port = os.getenv("PORT", "8080")
-        app_base_url = get_app_base_url(api_port)
+        cookie_path = get_app_base_url(None)
         # Create a safe cookie name from the base path
         cookie_suffix = (
-            app_base_url.strip("/").replace("/", "_").replace("-", "_") or "default"
+            cookie_path.strip("/").replace("/", "_").replace("-", "_") or "default"
         )
         session_cookie_name = f"sess_{cookie_suffix}"
 
@@ -147,6 +159,7 @@ def create_app(
         secret_key=config.session_secret_key,
         max_age=config.session_max_age,
         https_only=config.session_https_only,
+        path=cookie_path,
     )
 
     app.include_router(base_router)
@@ -172,6 +185,7 @@ def create_app(
         env_vars = {
             "BASE_PATH": app_base_url,
             "API_PORT": api_port,
+            "DATAROBOT_ENDPOINT": os.getenv("DATAROBOT_ENDPOINT", ""),
         }
 
         manifest_assets = get_manifest_assets(
@@ -190,5 +204,7 @@ def create_app(
                 "css_files": manifest_assets["css"],
             },
         )
+
+    register_log_filter()
 
     return app

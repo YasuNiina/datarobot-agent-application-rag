@@ -1,7 +1,8 @@
 import { Chat } from '@/components/Chat';
 import { v4 as uuid } from 'uuid';
 import z from 'zod/v4';
-import { isErrorMessage, type MessageResponse } from '@/api-state/chats/api-requests';
+import { isErrorMessage } from '@/api/chat/requests';
+import { type MessageResponse } from './api/chat/types';
 import { useChatContext } from '@/hooks/use-chat-context';
 // import { ChatSidebar } from '@/components/ChatSidebar';
 import { useAgUiTool } from '@/hooks/use-ag-ui-tool';
@@ -39,6 +40,7 @@ export function Example() {
     progress,
     setProgress,
     isLoadingHistory,
+    runningAgent,
   } = useChatContext();
 
   useAgUiTool({
@@ -49,7 +51,6 @@ export function Example() {
       message: z.string().describe('The message which will be displayed to user'),
     }),
   });
-
   return (
     <div className="chat">
       {/*<ChatSidebar chatId={chatId} setChatId={setChatId} />*/}
@@ -65,7 +66,12 @@ export function Example() {
             })}
         </ChatMessages>
         <ChatProgress progress={progress || {}} setProgress={setProgress} />
-        <ChatTextInput userInput={userInput} setUserInput={setUserInput} onSubmit={sendMessage} />
+        <ChatTextInput
+          userInput={userInput}
+          setUserInput={setUserInput}
+          onSubmit={sendMessage}
+          runningAgent={runningAgent}
+        />
       </Chat>
     </div>
   );

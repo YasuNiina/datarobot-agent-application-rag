@@ -4,7 +4,7 @@ import { Chat } from '@/components/Chat';
 // import z from 'zod/v4';
 // import { useAgUiTool } from '@/hooks/use-ag-ui-tool';
 // import { WeatherWidget } from '@/components/WeatherWidget';
-import type { MessageResponse } from '@/api-state/chats/api-requests';
+import type { MessageResponse } from '@/api/chat/types';
 
 const initialMessages: MessageResponse[] = [
   // {
