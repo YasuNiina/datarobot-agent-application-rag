@@ -1,9 +1,11 @@
 # Changes here will be overwritten by Copier
-_commit: 11.3.46
-_src_path: git@github.com:datarobot-community/af-component-agent.git
-agent_app_name: writer_agent
+_commit: 11.4.2
+_src_path: https://github.com/datarobot-community/af-component-agent.git
+agent_app_name: agent
+agent_development_port: 8842
 agent_template_framework: langgraph
 base_answers_file: .datarobot/answers/base.yml
 fastmcp_answers_file: .datarobot/answers/fastmcp-mcp_server.yml
+include_taskfile_infra: false
 llm_answers_file: .datarobot/answers/llm-llm.yml
 use_low_code_interface: false

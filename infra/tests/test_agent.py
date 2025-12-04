@@ -108,7 +108,7 @@ def test_execution_environment_not_set_and_docker_context(monkeypatch):
     monkeypatch.delenv("DATAROBOT_DEFAULT_EXECUTION_ENVIRONMENT", raising=False)
 
     import importlib
-    import infra.writer_agent as agent_infra
+    import infra.agent as agent_infra
 
     # Reset the mock to clear calls from the initial import
     agent_infra.pulumi_datarobot.ExecutionEnvironment.reset_mock()
@@ -124,10 +124,10 @@ def test_execution_environment_not_set_and_docker_context(monkeypatch):
     agent_infra.pulumi_datarobot.ExecutionEnvironment.assert_called_once()
     args, kwargs = agent_infra.pulumi_datarobot.ExecutionEnvironment.call_args
 
-    assert kwargs["resource_name"] == "[unittest] [writer_agent] Execution Environment"
+    assert kwargs["resource_name"] == "[unittest] [agent] Execution Environment"
     assert kwargs["programming_language"] == "python"
-    assert kwargs["name"] == "[unittest] [writer_agent] Execution Environment"
-    assert kwargs["description"] == "Execution Environment for [unittest] [writer_agent]"  # fmt: skip
+    assert kwargs["name"] == "[unittest] [agent] Execution Environment"
+    assert kwargs["description"] == "Execution Environment for [unittest] [agent]"  # fmt: skip
     assert "docker_context_path" in kwargs
     assert "docker_image" not in kwargs
     assert kwargs["use_cases"] == ["customModel", "notebook"]
@@ -149,7 +149,7 @@ def test_execution_environment_not_set_with_docker_image(monkeypatch):
     monkeypatch.setattr("os.path.exists", mock_exists)
 
     import importlib
-    import infra.writer_agent as agent_infra
+    import infra.agent as agent_infra
 
     # Reset the mock to clear calls from the initial import
     agent_infra.pulumi_datarobot.ExecutionEnvironment.reset_mock()
@@ -165,10 +165,10 @@ def test_execution_environment_not_set_with_docker_image(monkeypatch):
     agent_infra.pulumi_datarobot.ExecutionEnvironment.assert_called_once()
     args, kwargs = agent_infra.pulumi_datarobot.ExecutionEnvironment.call_args
 
-    assert kwargs["resource_name"] == "[unittest] [writer_agent] Execution Environment"
+    assert kwargs["resource_name"] == "[unittest] [agent] Execution Environment"
     assert kwargs["programming_language"] == "python"
-    assert kwargs["name"] == "[unittest] [writer_agent] Execution Environment"
-    assert kwargs["description"] == "Execution Environment for [unittest] [writer_agent]"  # fmt: skip
+    assert kwargs["name"] == "[unittest] [agent] Execution Environment"
+    assert kwargs["description"] == "Execution Environment for [unittest] [agent]"  # fmt: skip
     assert "docker_image" in kwargs
     assert "docker_context_path" not in kwargs
     assert kwargs["use_cases"] == ["customModel", "notebook"]
@@ -185,7 +185,7 @@ def test_execution_environment_default_set(monkeypatch):
     )
 
     import importlib
-    import infra.writer_agent as agent_infra
+    import infra.agent as agent_infra
 
     importlib.reload(agent_infra)
 
@@ -199,7 +199,7 @@ def test_execution_environment_default_set(monkeypatch):
     args, kwargs = agent_infra.pulumi_datarobot.ExecutionEnvironment.get.call_args
 
     assert kwargs["id"] == "python-311-genai-agents-id"
-    assert kwargs["resource_name"] == "[unittest] [writer_agent] Execution Environment"
+    assert kwargs["resource_name"] == "[unittest] [agent] Execution Environment"
 
     # ExecutionEnvironment constructor should not be called when using default env
     agent_infra.pulumi_datarobot.ExecutionEnvironment.assert_not_called()
@@ -212,7 +212,7 @@ def test_execution_environment_custom_set(monkeypatch):
     )
 
     import importlib
-    import infra.writer_agent as agent_infra
+    import infra.agent as agent_infra
 
     importlib.reload(agent_infra)
 
@@ -226,7 +226,7 @@ def test_execution_environment_custom_set(monkeypatch):
     args, kwargs = agent_infra.pulumi_datarobot.ExecutionEnvironment.get.call_args
 
     assert kwargs["id"] == "Custom Execution Environment"
-    assert kwargs["resource_name"] == "[unittest] [writer_agent] Execution Environment"
+    assert kwargs["resource_name"] == "[unittest] [agent] Execution Environment"
 
     # ExecutionEnvironment constructor should not be called when using custom env
     agent_infra.pulumi_datarobot.ExecutionEnvironment.assert_not_called()
@@ -238,7 +238,7 @@ def test_reset_environment_between_tests():
     assert os.environ.get("DATAROBOT_DEFAULT_EXECUTION_ENVIRONMENT") is None
 
     import importlib
-    import infra.writer_agent as agent_infra
+    import infra.agent as agent_infra
 
     importlib.reload(agent_infra)
 
@@ -252,7 +252,7 @@ def test_custom_model_created(monkeypatch):
     monkeypatch.delenv("DATAROBOT_DEFAULT_EXECUTION_ENVIRONMENT", raising=False)
 
     import importlib
-    import infra.writer_agent as agent_infra
+    import infra.agent as agent_infra
 
     # Reset the mock to clear calls from the initial import
     agent_infra.pulumi_datarobot.CustomModel.reset_mock()
@@ -265,12 +265,12 @@ def test_custom_model_created(monkeypatch):
 
     agent_infra.pulumi_datarobot.CustomModel.assert_called_once()
     args, kwargs = agent_infra.pulumi_datarobot.CustomModel.call_args
-    assert kwargs["resource_name"] == "[unittest] [writer_agent] Custom Model"
-    assert kwargs["name"] == "[unittest] [writer_agent] Custom Model"
-    assert kwargs["base_environment_id"] == agent_infra.writer_agent_execution_environment.id  # fmt: skip
+    assert kwargs["resource_name"] == "[unittest] [agent] Custom Model"
+    assert kwargs["name"] == "[unittest] [agent] Custom Model"
+    assert kwargs["base_environment_id"] == agent_infra.agent_execution_environment.id  # fmt: skip
     assert (
         kwargs["base_environment_version_id"]
-        == agent_infra.writer_agent_execution_environment.version_id
+        == agent_infra.agent_execution_environment.version_id
     )
     assert kwargs["target_type"] == "AgenticWorkflow"
     assert kwargs["target_name"] == "response"
@@ -294,7 +294,7 @@ def test_custom_model_created_pinned_version_id(monkeypatch):
     )
 
     import importlib
-    import infra.writer_agent as agent_infra
+    import infra.agent as agent_infra
 
     # Reset the mock to clear calls from the initial import
     agent_infra.pulumi_datarobot.CustomModel.reset_mock()
@@ -317,7 +317,7 @@ def test_agentic_playground_and_blueprint_created(monkeypatch):
     monkeypatch.setenv("DATAROBOT_ENDPOINT", "https://example.datarobot.com/api/v2")
 
     import importlib
-    import infra.writer_agent as agent_infra
+    import infra.agent as agent_infra
 
     # Reset the mocks to clear calls from the initial import
     agent_infra.pulumi_datarobot.Playground.reset_mock()
@@ -328,34 +328,34 @@ def test_agentic_playground_and_blueprint_created(monkeypatch):
     # Check that Agentic Playground was created
     agent_infra.pulumi_datarobot.Playground.assert_called_once()
     args, kwargs = agent_infra.pulumi_datarobot.Playground.call_args
-    assert kwargs["resource_name"] == "[unittest] [writer_agent] Agentic Playground"
-    assert kwargs["name"] == "[unittest] [writer_agent] Agentic Playground"
+    assert kwargs["resource_name"] == "[unittest] [agent] Agentic Playground"
+    assert kwargs["name"] == "[unittest] [agent] Agentic Playground"
     assert kwargs["use_case_id"] == agent_infra.use_case.id
     assert kwargs["playground_type"] == "agentic"
 
     # Check that LlmBlueprint was created and points to the created custom model
     agent_infra.pulumi_datarobot.LlmBlueprint.assert_called_once()
     args, kwargs = agent_infra.pulumi_datarobot.LlmBlueprint.call_args
-    assert kwargs["resource_name"] == "[unittest] [writer_agent] LLM Blueprint"
-    assert kwargs["name"] == "[unittest] [writer_agent] LLM Blueprint"
+    assert kwargs["resource_name"] == "[unittest] [agent] LLM Blueprint"
+    assert kwargs["name"] == "[unittest] [agent] LLM Blueprint"
     assert kwargs["llm_id"] == "chat-interface-custom-model"
     assert kwargs["prompt_type"] == "ONE_TIME_PROMPT"
     assert kwargs[
         "llm_settings"
     ] == agent_infra.pulumi_datarobot.LlmBlueprintLlmSettingsArgs(
-        custom_model_id=agent_infra.writer_agent_custom_model.id
+        custom_model_id=agent_infra.agent_custom_model.id
     )
 
     # Check that we export agent Playground URL from pulumi
     export_names = [call.args[0] for call in agent_infra.pulumi.export.call_args_list]
-    assert "Agent Playground URL " + agent_infra.writer_agent_asset_name in export_names  # fmt: skip
+    assert "Agent Playground URL " + agent_infra.agent_asset_name in export_names  # fmt: skip
 
     # Check the format of the URL
     agent_infra.pulumi.Output.format.assert_any_call(
         "{0}/usecases/{1}/agentic-playgrounds/{2}/comparison/chats",
         "https://example.datarobot.com",
         "mock-use-case-id",
-        agent_infra.writer_agent_playground.id,
+        agent_infra.agent_playground.id,
     )
 
 
@@ -365,7 +365,7 @@ def test_agent_deployment_created_when_env(monkeypatch):
     monkeypatch.delenv("DATAROBOT_DEFAULT_EXECUTION_ENVIRONMENT", raising=False)
 
     import importlib
-    import infra.writer_agent as agent_infra
+    import infra.agent as agent_infra
 
     # Reset mocks to clear calls from the initial import
     agent_infra.pulumi_datarobot.PredictionEnvironment.reset_mock()
@@ -380,7 +380,7 @@ def test_agent_deployment_created_when_env(monkeypatch):
     # Check that CustomModelDeployment was created
     agent_infra.CustomModelDeployment.assert_called_once()
     agent_infra.pulumi.export.assert_any_call(
-        "Agent Deployment Chat Endpoint " + agent_infra.writer_agent_asset_name,
+        "Agent Deployment Chat Endpoint " + agent_infra.agent_asset_name,
         agent_infra.CustomModelDeployment.return_value.id.apply.return_value,
     )
 
@@ -391,7 +391,7 @@ def test_agent_deployment_not_created_when_env_zero(monkeypatch):
     monkeypatch.delenv("DATAROBOT_DEFAULT_EXECUTION_ENVIRONMENT", raising=False)
 
     import importlib
-    import infra.writer_agent as agent_infra
+    import infra.agent as agent_infra
 
     # Reset mocks to clear calls from the initial import
     agent_infra.pulumi_datarobot.PredictionEnvironment.reset_mock()
@@ -405,7 +405,7 @@ def test_agent_deployment_not_created_when_env_zero(monkeypatch):
 
 class TestGetCustomModelFiles:
     def test_get_custom_model_files_basic(self, tmp_path):
-        import infra.writer_agent as agent_infra
+        import infra.agent as agent_infra
 
         # Create a simple file structure
         (tmp_path / "file1.py").write_text("print('hi')")
@@ -420,7 +420,7 @@ class TestGetCustomModelFiles:
         assert len(files) == 3
 
     def test_get_custom_model_files_excludes(self, tmp_path):
-        import infra.writer_agent as agent_infra
+        import infra.agent as agent_infra
 
         # Create files that should be excluded
         (tmp_path / "file1.py").write_text("print('hi')")
@@ -438,7 +438,7 @@ class TestGetCustomModelFiles:
         assert len(files) == 2
 
     def test_get_custom_model_files_symlinks(self, tmp_path):
-        import infra.writer_agent as agent_infra
+        import infra.agent as agent_infra
 
         # Create a real file and a symlink to it
         real_file = tmp_path / "real.py"
@@ -454,10 +454,10 @@ class TestGetCustomModelFiles:
 
 class TestSynchronizePyprojectDependencies:
     def test_synchronize_pyproject_dependencies_basic(self, tmp_path, monkeypatch):
-        import infra.writer_agent as agent_infra
+        import infra.agent as agent_infra
 
         # Mock the application path to point to our tmp_path
-        monkeypatch.setattr(agent_infra, "writer_agent_application_path", tmp_path)
+        monkeypatch.setattr(agent_infra, "agent_application_path", tmp_path)
 
         # Create pyproject.toml in the application path
         pyproject_content = """[project]
@@ -493,10 +493,10 @@ dependencies = ["requests>=2.0"]
     def test_synchronize_pyproject_dependencies_no_pyproject(
         self, tmp_path, monkeypatch
     ):
-        import infra.writer_agent as agent_infra
+        import infra.agent as agent_infra
 
         # Mock the application path to point to our tmp_path
-        monkeypatch.setattr(agent_infra, "writer_agent_application_path", tmp_path)
+        monkeypatch.setattr(agent_infra, "agent_application_path", tmp_path)
 
         # Create custom_model and docker_context directories but no pyproject.toml
         (tmp_path / "custom_model").mkdir()
@@ -512,10 +512,10 @@ dependencies = ["requests>=2.0"]
     def test_synchronize_pyproject_dependencies_missing_custom_model_dir(
         self, tmp_path, monkeypatch
     ):
-        import infra.writer_agent as agent_infra
+        import infra.agent as agent_infra
 
         # Mock the application path to point to our tmp_path
-        monkeypatch.setattr(agent_infra, "writer_agent_application_path", tmp_path)
+        monkeypatch.setattr(agent_infra, "agent_application_path", tmp_path)
 
         # Create pyproject.toml and docker_context directory but not custom_model
         pyproject_content = """[project]
@@ -537,10 +537,10 @@ name = "test-project"
     def test_synchronize_pyproject_dependencies_missing_docker_context_dir(
         self, tmp_path, monkeypatch
     ):
-        import infra.writer_agent as agent_infra
+        import infra.agent as agent_infra
 
         # Mock the application path to point to our tmp_path
-        monkeypatch.setattr(agent_infra, "writer_agent_application_path", tmp_path)
+        monkeypatch.setattr(agent_infra, "agent_application_path", tmp_path)
 
         # Create pyproject.toml and custom_model directory but not docker_context
         pyproject_content = """[project]
@@ -562,10 +562,10 @@ name = "test-project"
     def test_synchronize_pyproject_dependencies_overwrites_existing(
         self, tmp_path, monkeypatch
     ):
-        import infra.writer_agent as agent_infra
+        import infra.agent as agent_infra
 
         # Mock the application path to point to our tmp_path
-        monkeypatch.setattr(agent_infra, "writer_agent_application_path", tmp_path)
+        monkeypatch.setattr(agent_infra, "agent_application_path", tmp_path)
 
         # Create pyproject.toml in the application path
         new_content = """[project]
@@ -605,7 +605,7 @@ class TestMaybeImportFromModule:
     @pytest.mark.usefixtures("skip_if_no_fastmcp")
     def test_maybe_import_from_module_success(self):
         """Test that maybe_import_from_module successfully imports an existing module."""
-        import infra.writer_agent as agent_infra
+        import infra.agent as agent_infra
 
         # The fixture sets up the mocked MCP module with mcp_custom_model_runtime_parameters
         result = agent_infra.maybe_import_from_module(
@@ -615,7 +615,7 @@ class TestMaybeImportFromModule:
 
     def test_maybe_import_from_module_missing_module(self, monkeypatch):
         """Test that maybe_import_from_module returns None when module is not available."""
-        import infra.writer_agent as agent_infra
+        import infra.agent as agent_infra
 
         # Mock importlib.import_module to raise ImportError
         def mock_import_module(name, package=None):
@@ -631,7 +631,7 @@ class TestMaybeImportFromModule:
 
     def test_maybe_import_from_module_empty_module_name(self):
         """Test that maybe_import_from_module returns None with empty module name."""
-        import infra.writer_agent as agent_infra
+        import infra.agent as agent_infra
 
         result = agent_infra.maybe_import_from_module("", "some_attribute")
         assert result is None
@@ -640,7 +640,7 @@ class TestMaybeImportFromModule:
 class TestGetMcpCustomModelRuntimeParameters:
     def test_get_mcp_custom_model_runtime_parameters_from_module(self):
         """Test that MCP runtime parameters are loaded from the module when available."""
-        import infra.writer_agent as agent_infra
+        import infra.agent as agent_infra
 
         result = agent_infra.get_mcp_custom_model_runtime_parameters()
         # The fixture sets up a mock module with empty list
@@ -648,7 +648,7 @@ class TestGetMcpCustomModelRuntimeParameters:
 
     def test_get_mcp_custom_model_runtime_parameters_fallback_to_env(self, monkeypatch):
         """Test that MCP runtime parameters fall back to environment variables when module is unavailable."""
-        import infra.writer_agent as agent_infra
+        import infra.agent as agent_infra
 
         # Set up environment variables
         monkeypatch.setenv("MCP_DEPLOYMENT_ID", "test-deployment-123")
@@ -708,11 +708,11 @@ class TestGetMcpCustomModelRuntimeParameters:
 class TestGenerateMetadataYaml:
     def test_mixed_parameters(self, tmp_path, monkeypatch):
         """Test _generate_metadata_yaml with string and credential parameters, including special characters."""
-        import infra.writer_agent as agent_infra
+        import infra.agent as agent_infra
         import yaml  # type: ignore[import-untyped]
 
         # Mock the application path to point to our tmp_path
-        monkeypatch.setattr(agent_infra, "writer_agent_application_path", tmp_path)
+        monkeypatch.setattr(agent_infra, "agent_application_path", tmp_path)
 
         # Create mixed runtime parameters with special characters
         mock_params = [
@@ -722,7 +722,7 @@ class TestGenerateMetadataYaml:
         ]
 
         # Call the function with tmp_path as the custom_model_folder
-        agent_infra._generate_metadata_yaml("writer_agent", str(tmp_path), mock_params)
+        agent_infra._generate_metadata_yaml("agent", str(tmp_path), mock_params)
 
         # Read and parse the generated YAML
         metadata_file = tmp_path / "model-metadata.yaml"
@@ -732,7 +732,7 @@ class TestGenerateMetadataYaml:
             metadata = yaml.safe_load(f)
 
         # Verify metadata structure
-        assert metadata["name"] == "writer_agent"
+        assert metadata["name"] == "agent"
         assert metadata["type"] == "inference"
         assert metadata["targetType"] == "agenticworkflow"
 
@@ -758,14 +758,14 @@ class TestGenerateMetadataYaml:
 
     def test_with_empty_parameters(self, tmp_path, monkeypatch):
         """Test _generate_metadata_yaml generates correct YAML with empty parameter list."""
-        import infra.writer_agent as agent_infra
+        import infra.agent as agent_infra
         import yaml  # type: ignore[import-untyped]
 
         # Mock the application path to point to our tmp_path
-        monkeypatch.setattr(agent_infra, "writer_agent_application_path", tmp_path)
+        monkeypatch.setattr(agent_infra, "agent_application_path", tmp_path)
 
         # Call with empty parameters
-        agent_infra._generate_metadata_yaml("writer_agent", str(tmp_path), [])
+        agent_infra._generate_metadata_yaml("agent", str(tmp_path), [])
 
         # Read and parse the generated YAML
         metadata_file = tmp_path / "model-metadata.yaml"
@@ -775,30 +775,30 @@ class TestGenerateMetadataYaml:
             metadata = yaml.safe_load(f)
 
         # Verify structure
-        assert metadata["name"] == "writer_agent"
+        assert metadata["name"] == "agent"
         assert metadata["type"] == "inference"
         assert metadata["targetType"] == "agenticworkflow"
         assert metadata["runtimeParameterDefinitions"] == []
 
     def test_format_and_overwrite(self, tmp_path, monkeypatch):
         """Test _generate_metadata_yaml file formatting and overwrite behavior."""
-        import infra.writer_agent as agent_infra
+        import infra.agent as agent_infra
         import yaml  # type: ignore[import-untyped]
 
         # Mock the application path to point to our tmp_path
-        monkeypatch.setattr(agent_infra, "writer_agent_application_path", tmp_path)
+        monkeypatch.setattr(agent_infra, "agent_application_path", tmp_path)
 
         # Create an existing file with different content
         metadata_file = tmp_path / "model-metadata.yaml"
         metadata_file.write_text("old: content\n")
 
         mock_params = [MagicMock(key="NEW_PARAM", type="string")]
-        agent_infra._generate_metadata_yaml("writer_agent", str(tmp_path), mock_params)
+        agent_infra._generate_metadata_yaml("agent", str(tmp_path), mock_params)
 
         # Check raw file format
         content = metadata_file.read_text()
         assert content.startswith("---\n")
-        assert "name: writer_agent" in content
+        assert "name: agent" in content
         assert "type: inference" in content
         assert "targetType: agenticworkflow" in content
         assert "runtimeParameterDefinitions:" in content
@@ -809,5 +809,5 @@ class TestGenerateMetadataYaml:
             metadata = yaml.safe_load(f)
 
         assert "old" not in metadata
-        assert metadata["name"] == "writer_agent"
+        assert metadata["name"] == "agent"
         assert metadata["runtimeParameterDefinitions"][0]["fieldName"] == "NEW_PARAM"

@@ -31,10 +31,10 @@ if use_case_id := os.environ.get("DATAROBOT_DEFAULT_USE_CASE"):
 
     use_case = datarobot.UseCase.get(
         id=use_case_id,
-        resource_name="Agentic Writer [PRE-EXISTING]",
+        resource_name="Agentic Application Starter [PRE-EXISTING]",
     )
 else:
     use_case = datarobot.UseCase(
-        resource_name=f"Agentic Writer [{PROJECT_NAME}]",
+        resource_name=f"Agentic Application Starter [{PROJECT_NAME}]",
         description="""This application is a template for Generative AI agentic solutions""",
     )

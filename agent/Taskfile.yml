@@ -17,7 +17,7 @@ tasks:
   install:
     desc: 🛠️ Install agent uv dependencies
     cmds:
-      - echo "Updating local dependencies for writer_agent"
+      - echo "Updating local dependencies for agent"
       - "{{.UV_CMD}} sync --extra dev"
       - if [ -f pyproject.toml ] && [ -d docker_context ]; then cp pyproject.toml docker_context/pyproject.toml; fi
       - if [ -f uv.lock ] && [ -d docker_context ]; then cp uv.lock docker_context/uv.lock; fi
@@ -27,7 +27,7 @@ tasks:
     # Hidden to avoid showing in task list, run `task --list-all` to see it
     # desc: 🛠️ Update local dependencies (refresh uv locks)
     cmds:
-      - echo "Updating local dependencies for writer_agent"
+      - echo "Updating local dependencies for agent"
       - "{{.UV_CMD}} sync --extra dev -U"
     silent: true
   auth-check:
@@ -44,7 +44,7 @@ tasks:
   add-dependency:
     desc: 🛠️ Add provided packages as a new dependency to an agent
     cmds:
-      - echo "Adding new dependency for writer_agent into 'extras' dependency group"
+      - echo "Adding new dependency for agent into 'extras' dependency group"
       - "{{.UV_CMD}} add --no-upgrade --group extras {{.CLI_ARGS}}"
     silent: true
   lint:
@@ -104,13 +104,13 @@ tasks:
 
           # Wait for server to be ready
           echo "⏳ Waiting for dev server to be ready..."
-          AGENT_ENDPOINT="http://localhost:8842"
-          if [ -n "$WRITER_AGENT_ENDPOINT" ]; then
-            AGENT_ENDPOINT="$WRITER_AGENT_ENDPOINT"
+          _AGENT_ENDPOINT="http://localhost:8842"
+          if [ -n "$AGENT_ENDPOINT" ]; then
+            _AGENT_ENDPOINT="$AGENT_ENDPOINT"
           fi
           i=0
           while [ $i -lt 30 ]; do
-            if curl --silent --fail --max-time 2 "$AGENT_ENDPOINT/" >/dev/null 2>&1; then
+            if curl --silent --fail --max-time 2 "$_AGENT_ENDPOINT/" >/dev/null 2>&1; then
               echo "✅ Dev server is ready!"
               break
             fi
@@ -135,8 +135,8 @@ tasks:
           echo "❌ CLI command failed with exit status 1"
           echo "💡 It looks like you're trying to execute an agent that requires a dev server."
           echo "   Try one of these options:"
-          echo "   1. Start the dev server first: task writer_agent:dev"
-          echo "   2. Or run with auto dev server: task writer_agent:cli START_DEV=1 -- {{.CLI_ARGS}}"
+          echo "   1. Start the dev server first: task agent:dev"
+          echo "   2. Or run with auto dev server: task agent:cli START_DEV=1 -- {{.CLI_ARGS}}"
           echo ""
         fi
 
@@ -194,17 +194,17 @@ tasks:
       - rm ./docker_context/env_info.json
       - mv ./docker_context/Dockerfile ./docker_context/Dockerfile.prod
       - mv ./docker_context/Dockerfile.local ./docker_context/Dockerfile
-      - echo "Docker context created inside writer_agent/docker_context"
+      - echo "Docker context created inside agent/docker_context"
   build-docker-image:
     # desc: 🐳 Build the Docker image
     cmds:
       - echo "Building Docker image"
       - cp pyproject.toml docker_context/pyproject.toml
-      - cd docker_context && docker build --platform linux/amd64 -f Dockerfile -t writer_agent:latest .
+      - cd docker_context && docker build --platform linux/amd64 -f Dockerfile -t agent:latest .
   build-docker-context:
     desc: 🐳 Build the Docker image
     cmds:
       - task: create-docker-context
       - echo "Saving Docker image"
-      - docker save writer_agent:latest | gzip -1 > docker_context.tar.gz
+      - docker save agent:latest | gzip -1 > docker_context.tar.gz
     silent: true

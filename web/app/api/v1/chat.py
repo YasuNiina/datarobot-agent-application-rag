@@ -26,7 +26,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from app.ag_ui.translate import ExtendedBaseMessage, translate_messages
-from app.auth.ctx import get_auth_ctx_header, must_get_auth_ctx
+from app.auth.ctx import get_agent_headers, must_get_auth_ctx
 from app.chats import Chat, ChatBase, ChatRepository
 from app.deps import Deps
 from app.messages import (
@@ -198,7 +198,7 @@ async def create_chat_messages(
 
     # Create an event encoder to properly format SSE events
     encoder = EventEncoder(accept=request.headers.get("accept") or "")
-    agent_headers = get_auth_ctx_header(auth_ctx, deps.config.session_secret_key)
+    agent_headers = get_agent_headers(request, auth_ctx, deps.config.session_secret_key)
 
     stream = deps.stream_manager.run(run_input, current_user.uuid, agent_headers)
 

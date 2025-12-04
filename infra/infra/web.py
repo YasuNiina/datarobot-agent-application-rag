@@ -29,7 +29,7 @@ from . import project_dir, use_case
 from .frontend_web import frontend_web
 from .llm import app_runtime_parameters as llm_app_runtime_parameters
 from .oauth import app_runtime_parameters as oauth_app_runtime_parameters
-from .writer_agent import writer_agent_app_runtime_parameters
+from .agent import agent_app_runtime_parameters
 
 
 SESSION_SECRET_KEY: Final[str] = "SESSION_SECRET_KEY"
@@ -190,7 +190,7 @@ def get_web_app_files(
 # Start of Pulumi settings and application infrastructure
 pulumi.export("SESSION_SECRET_KEY", session_secret_key)
 session_secret_cred = pulumi_datarobot.ApiTokenCredential(
-    f"Agentic Writer Session Secret Key [{PROJECT_NAME}]",
+    f"Agentic Application Starter Session Secret Key [{PROJECT_NAME}]",
     args=pulumi_datarobot.ApiTokenCredentialArgs(
         api_token=str(session_secret_key),
     ),
@@ -199,15 +199,15 @@ web_app_env_name: str = "DATAROBOT_APPLICATION_ID"
 web_application_path = project_dir.parent / "web"
 
 web_app_source_args = ApplicationSourceArgs(
-    resource_name=f"Agentic Writer [{PROJECT_NAME}]",
+    resource_name=f"Agentic Application Starter [{PROJECT_NAME}]",
     base_environment_id=RuntimeEnvironments.PYTHON_312_APPLICATION_BASE.value.id,
 ).model_dump(mode="json", exclude_none=True)
 
-web_app_resource_name: str = f"Agentic Writer [{PROJECT_NAME}]"
+web_app_resource_name: str = f"Agentic Application Starter [{PROJECT_NAME}]"
 web_app_runtime_parameters: list[
     pulumi_datarobot.ApplicationSourceRuntimeParameterValueArgs
 ] = (
-    writer_agent_app_runtime_parameters
+    agent_app_runtime_parameters
     + llm_app_runtime_parameters
     + [
         parameter

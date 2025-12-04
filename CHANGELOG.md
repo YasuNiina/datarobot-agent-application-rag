@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased Changes
 
+## 11.3.2
+- Improvements to dev containers and start experience
+
 ## 11.3.1
 - Fix error handling in UI
 - Remove mastra dependencies

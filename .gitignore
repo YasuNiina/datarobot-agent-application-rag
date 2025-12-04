@@ -1,4 +1,4 @@
-/Taskfile.yaml
+/Taskfile.yml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -270,3 +270,7 @@ Taskfile.gen.yaml
 #  .dr/state contains user-specific history and audit-trail while working with the CLI
 .datarobot/state/
 .datarobot/cli/state.yaml
+
+# Agent environment files
+*/custom_model/pyproject.toml
+*/custom_model/uv.lock

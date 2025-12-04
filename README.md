@@ -38,6 +38,8 @@ It supports local development and testing, as well as one-command deployments to
 - [Run your agent](#run-your-agent)
 - [Develop your agent](#develop-your-agent)
 - [Deploy your agent](#deploy-your-agent)
+- [MCP Server](#mcp-server)
+- [OAuth Applications](#oauth-applications)
 - [Get help](#get-help)
 
 # Installation
@@ -82,7 +84,6 @@ For detailed installation steps, see [Installation instructions](https://docs.da
 This template offers a `devcontainer` with all prerequisites installed.
 To start working in it, simply open the template in PyCharm (version >= 2023.2, Pro) or VSCode, and the IDE will prompt you to reopen it in a container.
 
-<details><summary><b>☂️ Click here to see example screenshots</b></summary>
 *PyCharm*:
 
 <img src="docs/img/pycharm-devcontainer.png" alt="Open in Dev Container PyCharm" width="350px" />
@@ -90,7 +91,6 @@ To start working in it, simply open the template in PyCharm (version >= 2023.2, 
 *VSCode*:
 
 <img src="docs/img/vscode-devcontainer.png" alt="Open in Dev Container VSCode" width="350px" />
-</details>
 
 Click **Reopen in Container** to reopen the project in the container.
 Then, if you work directly in the terminal, run:
@@ -99,15 +99,14 @@ Then, if you work directly in the terminal, run:
 devcontainer up --workspace-folder .
 devcontainer exec --workspace-folder . /bin/sh
 ```
+</details>
 
 ## Prepare application
 
 > [!CAUTION]
 > Ensure that all prerequisites are installed before proceeding.
 
-As the final step, run `dr start` to prepare your local development environment. An interactive wizard will guide you through the selection of configuration options.
-
-</details>
+As the final step, run `task start` to prepare your local development environment. An interactive wizard will guide you through the selection of configuration options.
 
 <details><summary><b>☂️ Configuration options explained</b></summary>
 
@@ -249,10 +248,10 @@ dr task run mcp_server:dev
 dr task run web:dev
 ```
 
-4. In a fourth terminal window or tab, start the writer agent:
+4. In a fourth terminal window or tab, start the agent:
 
 ```shell
-dr task run writer_agent:dev
+dr task run agent:dev
 ```
 
 5. Open your browser and navigate to http://localhost:8080.
@@ -280,13 +279,13 @@ If you want to test just the agent without the full application, you can use the
 1. Start the writer agent:
 
 ```shell
-dr task run writer_agent:dev
+dr task run agent:dev
 ```
 
 2. In another terminal, start the Chainlit interface:
 
 ```shell
-dr task run writer_agent:chainlit
+dr task run agent:chainlit
 ```
 
 This will start a separate frontend application for your local agent at http://localhost:8083/.
@@ -316,6 +315,75 @@ Run the following command to deploy your agent:
 ```shell
 dr task run deploy
 ```
+
+---
+
+# MCP Server
+
+MCP Server gives the agent access to tools.
+The template is configured to automatically connect agent with MCP Server both locally and in deployed setting.
+
+## Testing against remote servers
+
+By default, when testing locally, the MCP Server connects to a local instance running at `http://localhost:{$MCP_SERVER_PORT}`. To modify the port, set the `MCP_SERVER_PORT` environment variable in your `.env` file.
+
+To test against remote MCP Servers:
+
+- Set `MCP_DEPLOYMENT_ID` to test against a deployed MCP Server in DataRobot.
+- Set `EXTERNAL_MCP_URL` to connect to an external MCP Server endpoint (for example: `https://example.com/mcp`). Note that DataRobot bearer tokens and OAuth context are not forwarded to external MCP servers. To send custom headers, set `EXTERNAL_MCP_HEADERS` to a JSON string (e.g., `'{"Authorization":"Bearer token123","X-Custom-Header":"value"}'`); it will be parsed using `json.loads()`. To change the transport for MCP Server, set `EXTERNAL_MCP_TRANSPORT` to `sse` or `streamable-http` (default).
+
+When running `task deploy`, the project automatically deploys the MCP Server from your project, which takes precedence over any MCP Servers configured via environment variables for testing purposes.
+
+---
+
+# OAuth Applications
+
+The template can work with files stored in Google Drive and Box.
+In order to give it access to those files, you need to configure OAuth Applications.
+
+## Google OAuth Application
+
+- Go to [Google API Console](https://console.developers.google.com/) from your Google account
+- Navigate to "APIs & Services" > "Enabled APIs & services" > "Enable APIs and services" search for Drive, and add it.
+- Navigate to "APIs & Services" > "OAuth consent screen" and make sure you have your consent screen configured. You may have both "External" and "Internal" audience types.
+- Navigate to "APIs & Services" > "Credentials" and click on the "Create Credentials" button. Select "OAuth client ID".
+- Select "Web application" as Application type, fill in "Name" & "Authorized redirect URIs" fields. For example, for local development, the redirect URL will be:
+  - `http://localhost:5173/oauth/callback` - local vite dev server (used by frontend developers)
+  - `http://localhost:8080/oauth/callback` - web-proxied frontend
+  - `http://localhost:8080/api/v1/oauth/callback/` - the local web API (optional).
+  - For production, you'll want to add your DataRobot callback URL. For example, in US Prod it is `https://app.datarobot.com/custom_applications/{appId}/oauth/callback`. For any installation of DataRobot it is `https://<datarobot-endpoint>/custom_applications/{appId}/oauth/callback`.
+- Hit the "Create" button when you are done.
+- Copy the "Client ID" and "Client Secret" values from the created OAuth client ID and set them in the template env variables as `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` correspondingly.
+- Make sure you have the "Google Drive API" enabled in the "APIs & Services" > "Library" section. Otherwise, you will get 403 errors.
+- Finally, go to "APIs & Services" > "OAuth consent screen" > "Data Access" and make sure you have the following scopes selected:
+  - `openid`
+  - `https://www.googleapis.com/auth/userinfo.email`
+  - `https://www.googleapis.com/auth/userinfo.profile`
+  - `https://www.googleapis.com/auth/drive.readonly`
+
+## Box OAuth Application
+
+- Head to [Box Developer Console](https://app.box.com/developers/console) from your Box account
+- Create a new platform application, then select "Custom App" type
+- Fill in "Application Name" and select "Purpose" (e.g. "Integration"). Then, fill in three more info fields. The actual selection doesn't matter.
+- Select "User Authentication (OAuth 2.0)" as Authentication Method and click on the "Create App" button
+- In the "OAuth 2.0 Redirect URIs" section, please fill in callback URLs you want to use.
+  - `http://localhost:5173/oauth/callback` - local vite dev server (used by frontend developers)
+  - `http://localhost:8080/oauth/callback` - web-proxied frontend
+  - `http://localhost:8080/api/v1/oauth/callback/` - the local web API (optional).
+  - For production, you'll want to add your DataRobot callback URL. For example, in US Prod it is `https://app.datarobot.com/custom_applications/{appId}/oauth/callback`.
+- Hit "Save Changes" after that.
+- Under the "Application Scopes", please make sure you have both `Read all files and folders stored in Box` and "Write all files and folders store in Box" checkboxes selected. We need both because we need to "write" to the log that we've downloaded the selected files.
+- Finally, under the "OAuth 2.0 Credentials" section, you should be able to find your Client ID and Client Secret pair to setup in the template env variables as `BOX_CLIENT_ID` and `BOX_CLIENT_SECRET` correspondingly.
+
+After you've set those in your project `.env` file, on the next `task deploy`, we'll create OAuth
+providers in your DataRobot installation. To view and manage those and verify they are working
+navigate to `<your_datarobot_url>/account/oauth-providers` or in US production: https://app.datarobot.com/account/oauth-providers.
+
+Additionally, the Pulumi output variables get used to populate those providers for your Codespace and
+local development environment as well.
+
+---
 
 # Get help
 

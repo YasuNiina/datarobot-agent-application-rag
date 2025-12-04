@@ -40,6 +40,7 @@ if TYPE_CHECKING:
 AUTH_SESS_KEY: Final[str] = "auth"
 
 AUTH_CTX_HEADER: Final[str] = "X-DataRobot-Authorization-Context"
+VISITOR_SCOPED_API_KEY_HEADER: Final[str] = "X-DATAROBOT-API-KEY"
 DEFAULT_JWT_ALGORITHM: Final[str] = "HS256"
 
 
@@ -57,7 +58,7 @@ def get_datarobot_ctx(request: Request) -> DRAppCtx:
     """
     config: Config = request.app.state.deps.config
     scoped_api_key = request.headers.get(
-        "X-DATAROBOT-API-KEY", config.test_user_api_key
+        VISITOR_SCOPED_API_KEY_HEADER, config.test_user_api_key
     )
     ext_email = request.headers.get("X-USER-EMAIL", config.test_user_email)
 
@@ -288,3 +289,32 @@ def get_auth_ctx_header(
     ).decode("utf-8")
 
     return {AUTH_CTX_HEADER: jwt_token}
+
+
+def get_agent_headers(
+    request: Request,
+    auth_ctx: AuthCtx[Metadata],
+    session_secret_key: str,
+    algorithm: str = DEFAULT_JWT_ALGORITHM,
+) -> dict[str, str]:
+    """
+    Compose headers for calls to the agent service.
+
+    This includes the encoded authorization context (JWT) and, if present
+    on the incoming request, the visitor API key.
+
+    Args:
+        request: The FastAPI request containing incoming headers.
+        auth_ctx: The authentication context to encode.
+        session_secret_key: The secret key used for JWT signing.
+        algorithm: The JWT algorithm to use (default: HS256).
+
+    Returns:
+        A dictionary of headers to be forwarded to the agent service.
+    """
+    headers = get_auth_ctx_header(auth_ctx, session_secret_key, algorithm)
+
+    if api_key := request.headers.get(VISITOR_SCOPED_API_KEY_HEADER):
+        headers[VISITOR_SCOPED_API_KEY_HEADER] = api_key
+
+    return headers

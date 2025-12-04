@@ -1,6 +1,52 @@
 ---
 # https://taskfile.dev
 version: '3'
+
+vars:
+  UV_CMD:
+    # Cross-platform environment cleaning - uses 'env -u' on Unix systems
+    # Falls back to empty string on Windows
+    sh: |
+      # This command ensures compatibility with codespaces environments
+      # Cross-platform environment cleaning - uses 'env -u' on Unix systems,
+      # falls back to empty string on Windows
+      if command -v env >/dev/null 2>&1; then
+        echo "env -u PYTHONPATH -u VIRTUAL_ENV uv"
+      else
+        echo "uv"
+      fi
+
+  PULUMI_SKIP_UPDATE_CHECK:
+    # Check if PULUMI_SKIP_UPDATE_CHECK is set in the environment;
+    # if not, default to "0"
+    sh: |
+      if [ -n "${PULUMI_SKIP_UPDATE_CHECK:-}" ]; then
+        echo "${PULUMI_SKIP_UPDATE_CHECK}"
+      else
+        echo "0"
+      fi
+
+  PULUMI_DATAROBOT_PLUGIN_VERSION:
+    # Check if PULUMI_DATAROBOT_PLUGIN_VERSION is set in the environment;
+    # if not, default to preset version
+    sh: |
+      if [ -n "${PULUMI_DATAROBOT_PLUGIN_VERSION:-}" ]; then
+        echo "${PULUMI_DATAROBOT_PLUGIN_VERSION}"
+      else
+        echo "v0.10.24"
+      fi
+
+  PULUMI_DATAROBOT_DEFAULT_URL:
+    # Check if PULUMI_DATAROBOT_DEFAULT_URL is set in the environment;
+    # if not, default to preset URL
+    # This url can be specified to override the default url (e.g. air gap)
+    sh: |
+      if [ -n "${PULUMI_DATAROBOT_DEFAULT_URL:-}" ]; then
+        echo "${PULUMI_DATAROBOT_DEFAULT_URL}"
+      else
+        echo "https://github.com/datarobot-community/pulumi-datarobot/releases/download/v0.10.24"
+      fi
+
 tasks:
   install-pulumi-plugin:
     # Prevents github rate limiting issues when installing pulumi datarobot plugin.
@@ -8,7 +54,7 @@ tasks:
     silent: true
     # desc: "⬇️ Install DataRobot Pulumi plugins"
     cmds:
-      - uv run pulumi plugin install resource datarobot v0.10.23 --server https://github.com/datarobot-community/pulumi-datarobot/releases/download/v0.10.23/
+      - "{{.UV_CMD}} run pulumi plugin install resource datarobot {{.PULUMI_DATAROBOT_PLUGIN_VERSION}} --server {{.PULUMI_DATAROBOT_DEFAULT_URL}}"
 
   auth-check:
     silent: true
@@ -22,11 +68,24 @@ tasks:
           echo "ℹ️  Skipping auth check (not available)"
         fi
 
+  pulumi-datarobot-plugin-check:
+    # Prevents github rate limiting issues when installing pulumi datarobot plugin.
+    # See https://github.com/datarobot-community/pulumi-datarobot?tab=readme-ov-file#rate-limited-by-github
+    # To use this task by default, set the environment variable PULUMI_SKIP_UPDATE_CHECK=1
+    silent: true
+    # desc: "⬇️ Install DataRobot Pulumi plugins"
+    cmds:
+      - |
+        if [ "{{.PULUMI_SKIP_UPDATE_CHECK}}" = "1" ]; then
+          {{.UV_CMD}} run pulumi plugin install resource datarobot {{.PULUMI_DATAROBOT_PLUGIN_VERSION}} \
+          --server {{.PULUMI_DATAROBOT_DEFAULT_URL}}
+        fi
+
   install:
     desc: "🔧 Install dependencies"
     cmds:
       - echo "🔧 Installing dependencies.."
-      - uv sync --all-extras --dev
+      - "{{.UV_CMD}} sync --all-extras --dev"
 
   start:
     silent: true
@@ -41,29 +100,29 @@ tasks:
     desc: "🧹 Run linters"
     cmds:
       - echo "🧹 Running linters.."
-      - uv run ruff format .
-      - uv run ruff check . --fix
-      - uv run mypy --pretty .
+      - "{{.UV_CMD}} run ruff format ."
+      - "{{.UV_CMD}} run ruff check . --fix"
+      - "{{.UV_CMD}} run mypy --pretty ."
 
   lint-check:
     silent: true
     desc: "🧹 Check whether the codebase is linted"
     cmds:
-      - uv run ruff format --check .
-      - uv run ruff check .
-      - uv run mypy --pretty .
+      - "{{.UV_CMD}} run ruff format --check ."
+      - "{{.UV_CMD}} run ruff check ."
+      - "{{.UV_CMD}} run mypy --pretty ."
 
   init:
     silent: true
     desc: "🆕 Initialize a new Pulumi stack"
     cmds:
-      - uv run pulumi stack init
+      - "{{.UV_CMD}} run pulumi stack init {{.CLI_ARGS}}"
 
   select:
     silent: true
     desc: "🚂 Select a Stack"
     cmds:
-      - uv run pulumi stack select
+      - "{{.UV_CMD}} run pulumi stack select {{.CLI_ARGS}}"
 
   up:
     silent: true
@@ -75,14 +134,21 @@ tasks:
     cmds:
       - task: install-pulumi-plugin
       - echo "🔨 Deploying the infrastructure.."
-      - export PULUMI_SKIP_UPDATE_CHECK=1 && uv run pulumi up
+      - "export PULUMI_SKIP_UPDATE_CHECK=1 && {{.UV_CMD}} run pulumi up {{.CLI_ARGS}}"
 
   info:
     silent: true
     desc: "ℹ️ Show Pulumi stack info"
     cmds:
       - task: install-pulumi-plugin
-      - export PULUMI_SKIP_UPDATE_CHECK=1 && uv run pulumi stack
+      - "export PULUMI_SKIP_UPDATE_CHECK=1 && {{.UV_CMD}} run pulumi stack {{.CLI_ARGS}}"
+
+  pulumi:
+    silent: true
+    # desc: "ℹ🛠️ Execute a generic pulumi command"
+    cmds:
+      - task: install-pulumi-plugin
+      - "export PULUMI_SKIP_UPDATE_CHECK=1 {{.UV_CMD}} run pulumi {{.CLI_ARGS}}"
 
   down:
     silent: true
@@ -94,7 +160,7 @@ tasks:
     cmds:
       - task: install-pulumi-plugin
       - echo "💥 Destroying the infrastructure.."
-      - export PULUMI_SKIP_UPDATE_CHECK=1 && uv run pulumi down
+      - export PULUMI_SKIP_UPDATE_CHECK=1 && {{.UV_CMD}} run pulumi down {{.CLI_ARGS}}
 
   copyright:
     aliases:
@@ -134,4 +200,4 @@ tasks:
           --target 'urn:pulumi:*::*::datarobot:index/llmBlueprint:LlmBlueprint::LLM Blueprint*' \
           --target 'urn:pulumi:*::*::datarobot:index/playground:Playground::LLM Playground*' \
           --target 'urn:pulumi:*::*::datarobot:index/registeredModel:RegisteredModel::LLM Registered Model*' \
-          --target 'urn:pulumi:*::agentic-writer::datarobot:index/appOauth:AppOauth::*'
+          --target 'urn:pulumi:*::*::datarobot:index/appOauth:AppOauth::*'

@@ -29,6 +29,7 @@ tasks:
     desc: "🔨 Run the development server"
     deps:
       - auth-check
+      - migrate
     cmds:
       - echo "🔨 Starting development server"
       - uv run uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload

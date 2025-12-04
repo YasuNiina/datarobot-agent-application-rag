@@ -16,8 +16,6 @@ root:
     options:
       - name: "DataRobot OAuth Provider"
         value: "datarobot_provider.py"
-      - name: "Authlib OAuth Provider (OSS)"
-        value: "authlib_provider.py"
 
   - key: OAuth_Providers
     type: string

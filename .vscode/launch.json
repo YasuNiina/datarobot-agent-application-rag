@@ -8,12 +8,12 @@
             "name": "Python Debugger: Agent",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/writer_agent/dev.py",
+            "program": "${workspaceFolder}/agent/dev.py",
             "console": "integratedTerminal",
             "envFile": "${workspaceFolder}/.env",
-            "python": "${workspaceFolder}/writer_agent/.venv/bin/python",
+            "python": "${workspaceFolder}/agent/.venv/bin/python",
             "justMyCode": false,
-            "cwd": "${workspaceFolder}/writer_agent",
+            "cwd": "${workspaceFolder}/agent",
         }
     ]
 }

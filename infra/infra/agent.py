@@ -16,7 +16,7 @@ from pathlib import Path
 import re
 import shutil
 from typing import cast, Final, Optional, Any, Sequence
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 import datarobot as dr
 import pulumi
@@ -54,21 +54,21 @@ EXCLUDE_PATTERNS = [
 
 
 __all__ = [
-    "writer_agent_application_name",
-    "writer_agent_application_path",
-    "writer_agent_execution_environment_id",
-    "writer_agent_prediction_environment",
-    "writer_agent_custom_model",
-    "writer_agent_agent_deployment_id",
-    "writer_agent_registered_model_args",
-    "writer_agent_deployment_args",
-    "writer_agent_agent_deployment",
-    "writer_agent_app_runtime_parameters",
+    "agent_application_name",
+    "agent_application_path",
+    "agent_execution_environment_id",
+    "agent_prediction_environment",
+    "agent_custom_model",
+    "agent_agent_deployment_id",
+    "agent_registered_model_args",
+    "agent_deployment_args",
+    "agent_agent_deployment",
+    "agent_app_runtime_parameters",
 ]
 
-writer_agent_application_name: str = "writer_agent"
-writer_agent_asset_name: str = f"[{PROJECT_NAME}] [writer_agent]"
-writer_agent_application_path = project_dir.parent / "writer_agent"
+agent_application_name: str = "agent"
+agent_asset_name: str = f"[{PROJECT_NAME}] [agent]"
+agent_application_path = project_dir.parent / "agent"
 
 
 def _generate_metadata_yaml(
@@ -118,7 +118,7 @@ def get_custom_model_files(
 ) -> list[tuple[str, str]]:
     # generate model-metadata.yaml file in the custom model folder
     _generate_metadata_yaml(
-        agent_name="writer_agent",
+        agent_name="agent",
         custom_model_folder=custom_model_folder,
         runtime_parameter_values=runtime_parameter_values,
     )
@@ -144,15 +144,11 @@ def get_custom_model_files(
 
 
 def synchronize_pyproject_dependencies():
-    pyproject_toml_path = os.path.join(
-        str(writer_agent_application_path), "pyproject.toml"
-    )
-    uv_lock_path = os.path.join(str(writer_agent_application_path), "uv.lock")
-    custom_model_folder = str(
-        os.path.join(str(writer_agent_application_path), "custom_model")
-    )
+    pyproject_toml_path = os.path.join(str(agent_application_path), "pyproject.toml")
+    uv_lock_path = os.path.join(str(agent_application_path), "uv.lock")
+    custom_model_folder = str(os.path.join(str(agent_application_path), "custom_model"))
     docker_context_folder = str(
-        os.path.join(str(writer_agent_application_path), "docker_context")
+        os.path.join(str(agent_application_path), "docker_context")
     )
 
     # Check if pyproject.toml exists in the application path
@@ -287,57 +283,56 @@ pulumi.info("NOTE: [unknown] values will be populated after performing an update
 
 # Start of Pulumi settings and application infrastructure
 if len(os.environ.get("DATAROBOT_DEFAULT_EXECUTION_ENVIRONMENT", "")) > 0:
-    writer_agent_execution_environment_id = os.environ[
+    agent_execution_environment_id = os.environ[
         "DATAROBOT_DEFAULT_EXECUTION_ENVIRONMENT"
     ]
 
-    if DEFAULT_EXECUTION_ENVIRONMENT in writer_agent_execution_environment_id:
+    if DEFAULT_EXECUTION_ENVIRONMENT in agent_execution_environment_id:
         pulumi.info(
             "Using default GenAI Agents execution environment "
-            + writer_agent_execution_environment_id
+            + agent_execution_environment_id
         )
-        writer_agent_execution_environment = pulumi_datarobot.ExecutionEnvironment.get(
+        agent_execution_environment = pulumi_datarobot.ExecutionEnvironment.get(
             id=RuntimeEnvironments.PYTHON_311_GENAI_AGENTS.value.id,
-            resource_name=writer_agent_asset_name + " Execution Environment",
+            resource_name=agent_asset_name + " Execution Environment",
         )
     else:
         pulumi.info(
-            "Using existing execution environment "
-            + writer_agent_execution_environment_id
+            "Using existing execution environment " + agent_execution_environment_id
         )
-        writer_agent_execution_environment = pulumi_datarobot.ExecutionEnvironment.get(
-            id=writer_agent_execution_environment_id,
-            resource_name=writer_agent_asset_name + " Execution Environment",
+        agent_execution_environment = pulumi_datarobot.ExecutionEnvironment.get(
+            id=agent_execution_environment_id,
+            resource_name=agent_asset_name + " Execution Environment",
         )
 else:
-    writer_agent_exec_env_use_cases = ["customModel", "notebook"]
+    agent_exec_env_use_cases = ["customModel", "notebook"]
     if os.path.exists(
-        os.path.join(str(writer_agent_application_path), "docker_context.tar.gz")
+        os.path.join(str(agent_application_path), "docker_context.tar.gz")
     ):
         pulumi.info(
             "Using prebuilt Dockerfile docker_context.tar.gz to run the execution environment"
         )
-        writer_agent_execution_environment = pulumi_datarobot.ExecutionEnvironment(
-            resource_name=writer_agent_asset_name + " Execution Environment",
-            name=writer_agent_asset_name + " Execution Environment",
-            description="Execution Environment for " + writer_agent_asset_name,
+        agent_execution_environment = pulumi_datarobot.ExecutionEnvironment(
+            resource_name=agent_asset_name + " Execution Environment",
+            name=agent_asset_name + " Execution Environment",
+            description="Execution Environment for " + agent_asset_name,
             programming_language="python",
             docker_image=os.path.join(
-                str(writer_agent_application_path), "docker_context.tar.gz"
+                str(agent_application_path), "docker_context.tar.gz"
             ),
-            use_cases=writer_agent_exec_env_use_cases,
+            use_cases=agent_exec_env_use_cases,
         )
     else:
         pulumi.info("Using docker_context folder to compile the execution environment")
-        writer_agent_execution_environment = pulumi_datarobot.ExecutionEnvironment(
-            resource_name=writer_agent_asset_name + " Execution Environment",
-            name=writer_agent_asset_name + " Execution Environment",
-            description="Execution Environment for " + writer_agent_asset_name,
+        agent_execution_environment = pulumi_datarobot.ExecutionEnvironment(
+            resource_name=agent_asset_name + " Execution Environment",
+            name=agent_asset_name + " Execution Environment",
+            description="Execution Environment for " + agent_asset_name,
             programming_language="python",
             docker_context_path=os.path.join(
-                str(writer_agent_application_path), "docker_context"
+                str(agent_application_path), "docker_context"
             ),
-            use_cases=writer_agent_exec_env_use_cases,
+            use_cases=agent_exec_env_use_cases,
         )
 
 # Prepare runtime parameters for agent custom model deployment
@@ -351,7 +346,7 @@ SESSION_SECRET_KEY: Final[str] = "SESSION_SECRET_KEY"
 if session_secret_key := os.environ.get(SESSION_SECRET_KEY):
     pulumi.export(SESSION_SECRET_KEY, session_secret_key)
     session_secret_cred = pulumi_datarobot.ApiTokenCredential(
-        writer_agent_asset_name + " Session Secret Key",
+        agent_asset_name + " Session Secret Key",
         args=pulumi_datarobot.ApiTokenCredentialArgs(api_token=str(session_secret_key)),
     )
     agent_runtime_parameter_values.append(
@@ -363,7 +358,7 @@ if session_secret_key := os.environ.get(SESSION_SECRET_KEY):
     )
 
 base_environment_version_id: str | pulumi.Output[str] = (
-    writer_agent_execution_environment.version_id
+    agent_execution_environment.version_id
 )
 pinned_version_id = os.environ.get(
     "DATAROBOT_DEFAULT_EXECUTION_ENVIRONMENT_VERSION_ID", ""
@@ -371,45 +366,43 @@ pinned_version_id = os.environ.get(
 if pinned_version_id and re.match("^[a-f\d]{24}$", pinned_version_id):
     base_environment_version_id = pinned_version_id
 
-writer_agent_custom_model_files = get_custom_model_files(
-    custom_model_folder=str(
-        os.path.join(str(writer_agent_application_path), "custom_model")
-    ),
+agent_custom_model_files = get_custom_model_files(
+    custom_model_folder=str(os.path.join(str(agent_application_path), "custom_model")),
     runtime_parameter_values=agent_runtime_parameter_values,
 )
 
-writer_agent_custom_model = pulumi_datarobot.CustomModel(
-    resource_name=writer_agent_asset_name + " Custom Model",
-    name=writer_agent_asset_name + " Custom Model",
-    base_environment_id=writer_agent_execution_environment.id,
+agent_custom_model = pulumi_datarobot.CustomModel(
+    resource_name=agent_asset_name + " Custom Model",
+    name=agent_asset_name + " Custom Model",
+    base_environment_id=agent_execution_environment.id,
     base_environment_version_id=base_environment_version_id,
     target_type="AgenticWorkflow",
     target_name="response",
     language="python",
     use_case_ids=[use_case.id],
-    files=writer_agent_custom_model_files,
+    files=agent_custom_model_files,
     runtime_parameter_values=agent_runtime_parameter_values,
 )
 
-writer_agent_custom_model_endpoint = writer_agent_custom_model.id.apply(
+agent_custom_model_endpoint = agent_custom_model.id.apply(
     lambda id: f"{os.getenv('DATAROBOT_ENDPOINT')}/genai/agents/fromCustomModel/{id}/chat/"
 )
 
-writer_agent_playground = pulumi_datarobot.Playground(
-    name=writer_agent_asset_name + " Agentic Playground",
-    resource_name=writer_agent_asset_name + " Agentic Playground",
-    description="Experimentation Playground for " + writer_agent_asset_name,
+agent_playground = pulumi_datarobot.Playground(
+    name=agent_asset_name + " Agentic Playground",
+    resource_name=agent_asset_name + " Agentic Playground",
+    description="Experimentation Playground for " + agent_asset_name,
     use_case_id=use_case.id,
     playground_type="agentic",
 )
 
-writer_agent_blueprint = pulumi_datarobot.LlmBlueprint(
-    name=writer_agent_asset_name + " LLM Blueprint",
-    resource_name=writer_agent_asset_name + " LLM Blueprint",
-    playground_id=writer_agent_playground.id,
+agent_blueprint = pulumi_datarobot.LlmBlueprint(
+    name=agent_asset_name + " LLM Blueprint",
+    resource_name=agent_asset_name + " LLM Blueprint",
+    playground_id=agent_playground.id,
     llm_id="chat-interface-custom-model",
     llm_settings=pulumi_datarobot.LlmBlueprintLlmSettingsArgs(
-        custom_model_id=writer_agent_custom_model.id
+        custom_model_id=agent_custom_model.id
     ),
     prompt_type="ONE_TIME_PROMPT",
 )
@@ -420,44 +413,44 @@ datarobot_url = (
     .rstrip("/api/v2")
 )
 
-writer_agent_playground_url = pulumi.Output.format(
+agent_playground_url = pulumi.Output.format(
     "{0}/usecases/{1}/agentic-playgrounds/{2}/comparison/chats",
     datarobot_url,
     use_case.id,
-    writer_agent_playground.id,
+    agent_playground.id,
 )
 
 
 # Export the IDs of the created resources
 pulumi.export(
-    "Agent Execution Environment ID " + writer_agent_asset_name,
-    writer_agent_execution_environment.id,
+    "Agent Execution Environment ID " + agent_asset_name,
+    agent_execution_environment.id,
 )
 pulumi.export(
-    "Agent Custom Model Chat Endpoint " + writer_agent_asset_name,
-    writer_agent_custom_model_endpoint,
+    "Agent Custom Model Chat Endpoint " + agent_asset_name,
+    agent_custom_model_endpoint,
 )
-pulumi.export("Agent Playground URL " + writer_agent_asset_name, writer_agent_playground_url)  # fmt: skip
+pulumi.export("Agent Playground URL " + agent_asset_name, agent_playground_url)  # fmt: skip
 
 
-writer_agent_agent_deployment_id: pulumi.Output[str] = cast(pulumi.Output[str], "None")
-writer_agent_deployment_endpoint: pulumi.Output[str] = cast(pulumi.Output[str], "None")
+agent_agent_deployment_id: pulumi.Output[str] = cast(pulumi.Output[str], "None")
+agent_deployment_endpoint: pulumi.Output[str] = cast(pulumi.Output[str], "None")
 if os.environ.get("AGENT_DEPLOY") != "0":
-    writer_agent_prediction_environment = pulumi_datarobot.PredictionEnvironment(
-        resource_name=writer_agent_asset_name + " Prediction Environment",
-        name=writer_agent_asset_name + " Prediction Environment",
+    agent_prediction_environment = pulumi_datarobot.PredictionEnvironment(
+        resource_name=agent_asset_name + " Prediction Environment",
+        name=agent_asset_name + " Prediction Environment",
         platform=dr.enums.PredictionEnvironmentPlatform.DATAROBOT_SERVERLESS,
         opts=pulumi.ResourceOptions(retain_on_delete=False),
     )
 
-    writer_agent_registered_model_args = RegisteredModelArgs(
-        resource_name=writer_agent_asset_name + " Registered Model",
-        name=writer_agent_asset_name + " Registered Model",
+    agent_registered_model_args = RegisteredModelArgs(
+        resource_name=agent_asset_name + " Registered Model",
+        name=agent_asset_name + " Registered Model",
     )
 
-    writer_agent_deployment_args = DeploymentArgs(
-        resource_name=writer_agent_asset_name + " Deployment",
-        label=writer_agent_asset_name + " Deployment",
+    agent_deployment_args = DeploymentArgs(
+        resource_name=agent_asset_name + " Deployment",
+        label=agent_asset_name + " Deployment",
         association_id_settings=pulumi_datarobot.DeploymentAssociationIdSettingsArgs(
             column_names=["association_id"],
             auto_generate_id=False,
@@ -475,42 +468,40 @@ if os.environ.get("AGENT_DEPLOY") != "0":
         ),
     )
 
-    writer_agent_agent_deployment = CustomModelDeployment(
-        resource_name=writer_agent_asset_name + " Chat Deployment",
+    agent_agent_deployment = CustomModelDeployment(
+        resource_name=agent_asset_name + " Chat Deployment",
         use_case_ids=[use_case.id],
-        custom_model_version_id=writer_agent_custom_model.version_id,
-        prediction_environment=writer_agent_prediction_environment,
-        registered_model_args=writer_agent_registered_model_args,
-        deployment_args=writer_agent_deployment_args,
+        custom_model_version_id=agent_custom_model.version_id,
+        prediction_environment=agent_prediction_environment,
+        registered_model_args=agent_registered_model_args,
+        deployment_args=agent_deployment_args,
     )
-    writer_agent_agent_deployment_id = writer_agent_agent_deployment.id.apply(
-        lambda id: f"{id}"
-    )
-    writer_agent_deployment_endpoint = writer_agent_agent_deployment.id.apply(
+    agent_agent_deployment_id = agent_agent_deployment.id.apply(lambda id: f"{id}")
+    agent_deployment_endpoint = agent_agent_deployment.id.apply(
         lambda id: f"{os.getenv('DATAROBOT_ENDPOINT')}/deployments/{id}"
     )
-    writer_agent_deployment_completions_endpoint = writer_agent_agent_deployment.id.apply(
+    agent_deployment_completions_endpoint = agent_agent_deployment.id.apply(
         lambda id: f"{os.getenv('DATAROBOT_ENDPOINT')}/deployments/{id}/chat/completions"
     )
 
     export(
-        writer_agent_application_name.upper() + "_DEPLOYMENT_ID",
-        writer_agent_agent_deployment.id,
+        agent_application_name.upper() + "_DEPLOYMENT_ID",
+        agent_agent_deployment.id,
     )
     pulumi.export(
-        "Agent Deployment Chat Endpoint " + writer_agent_asset_name,
-        writer_agent_deployment_completions_endpoint,
+        "Agent Deployment Chat Endpoint " + agent_asset_name,
+        agent_deployment_completions_endpoint,
     )
 
-writer_agent_app_runtime_parameters = [
+agent_app_runtime_parameters = [
     pulumi_datarobot.ApplicationSourceRuntimeParameterValueArgs(
-        key=writer_agent_application_name.upper() + "_DEPLOYMENT_ID",
+        key=agent_application_name.upper() + "_DEPLOYMENT_ID",
         type="string",
-        value=writer_agent_agent_deployment_id,
+        value=agent_agent_deployment_id,
     ),
     pulumi_datarobot.ApplicationSourceRuntimeParameterValueArgs(
-        key=writer_agent_application_name.upper() + "_ENDPOINT",
+        key=agent_application_name.upper() + "_ENDPOINT",
         type="string",
-        value=writer_agent_deployment_endpoint,
+        value=agent_deployment_endpoint,
     ),
 ]

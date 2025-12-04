@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 from typing import Any, AsyncGenerator
 from unittest.mock import AsyncMock, patch
 
 import pytest
 import respx
-from datarobot_genai.drmcp import integration_test_mcp_session
 from httpx import Response
-from mcp.types import CallToolResult, ListToolsResult, TextContent
+
+from app.tools.google_drive import list_files_in_google_drive
 
 
 @pytest.fixture
@@ -96,42 +97,30 @@ class TestGoogleDriveIntegration:
         mock_oauth_service: AsyncMock,
         expected_file_names: list[str],
     ) -> None:
-        async with integration_test_mcp_session() as session:
-            # 1. Test listing available tools
-            tools_result: ListToolsResult = await session.list_tools()
-            tool_names = [tool.name for tool in tools_result.tools]
+        result_text: str = await list_files_in_google_drive(offset=0, limit=10)
+        result = json.loads(result_text)
 
-            assert "list_files_in_google_drive" in tool_names
+        # Verify the response structure
+        assert "files" in result or "data" in result, f"Result: {result_text}"
 
-            # 2. Test listing files in Google Drive
-            result: CallToolResult = await session.call_tool(
-                "list_files_in_google_drive",
-                {
-                    "offset": 0,
-                    "limit": 10,
-                },
+        # The result uses "data" key for the files list
+        assert "data" in result
+        assert result["count"] == 3
+        assert result["offset"] == 0
+        assert result["limit"] == 10
+        assert len(result["data"]) == 3
+
+        # Verify the mocked data appears in the response
+        result_file_names = [file["name"] for file in result["data"]]
+        for expected_name in expected_file_names:
+            assert expected_name in result_file_names, (
+                f"Expected '{expected_name}' in result: {result_file_names}"
             )
 
-            # 3. Validate the response
-            assert not result.isError
-            assert len(result.content) > 0
-            assert isinstance(result.content[0], TextContent)
+        # Verify the mocks were called correctly
+        assert mock_oauth_service.called, (
+            "OAuth token retrieval should have been called"
+        )
+        mock_oauth_service.assert_called_once_with("google")
 
-            result_text = result.content[0].text
-
-            # 4. Verify the mocked data appears in the response
-            assert "files" in result_text, f"Result text: {result_text}"
-            for file_name in expected_file_names:
-                assert file_name in result_text, (
-                    f"Expected '{file_name}' in result: {result_text}"
-                )
-
-            # 5. Verify the mocks were called correctly
-            assert mock_oauth_service.called, (
-                "OAuth token retrieval should have been called"
-            )
-            mock_oauth_service.assert_called_once_with("google")
-
-            assert mock_google_drive_api.called, (
-                "Google Drive API should have been called"
-            )
+        assert mock_google_drive_api.called, "Google Drive API should have been called"

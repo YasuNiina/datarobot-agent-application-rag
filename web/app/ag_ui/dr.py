@@ -43,7 +43,7 @@ class DataRobotAGUIAgent(AGUIAgent):
         self, name: str, config: Config, headers: Dict[str, str] | None = None
     ) -> None:
         super().__init__(name)
-        self.url = config.writer_agent_endpoint
+        self.url = config.agent_endpoint
 
         agent_headers = {"Authorization": f"Bearer {config.datarobot_api_token}"}
         if headers:

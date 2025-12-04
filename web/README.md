@@ -1,4 +1,4 @@
-# Agentic Writer: FastAPI App web
+# Agentic Application Starter: FastAPI App web
 
 ## Tech Stack
 

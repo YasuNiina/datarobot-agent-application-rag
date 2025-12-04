@@ -1,5 +1,5 @@
 root:
-  - env: WRITER_AGENT_ENDPOINT
+  - env: AGENT_ENDPOINT
     type: string
     default: "http://localhost:8842"
     optional: true

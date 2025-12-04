@@ -34,7 +34,7 @@ class Config(DataRobotAppFrameworkBaseSettings):
     log_level: LogLevel = LogLevel.INFO
     log_format: FormatType = "json"
 
-    writer_agent_endpoint: str = "http://localhost:8842"
+    agent_endpoint: str = "http://localhost:8842"
 
     oauth_impl: OAuthImpl = OAuthImpl.DATAROBOT
     datarobot_oauth_providers: Sequence[str] = ()

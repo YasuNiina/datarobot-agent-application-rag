@@ -2,7 +2,6 @@
 root:
   - env: INFRA_ENABLE_LLM
     type: string
-    optional: true
     help: "Select the type of LLM integration to enable."
     options:
       - name: "External LLM"
@@ -13,6 +12,7 @@ root:
       - name: "DataRobot Deployed LLM"
         value: "deployed_llm.py"
         requires: deployed_llm
+    default: "gateway_direct.py"
 
 deployed_llm:
   - env: TEXTGEN_DEPLOYMENT_ID
@@ -23,7 +23,7 @@ deployed_llm:
 external_llm:
   - env: LLM_DEFAULT_MODEL
     type: string
-    default: "gpt-3.5-turbo"
+    default: "gpt-4o"
     optional: true
     help: "The name of the external LLM model to use."
   - key: external_llm_provider
