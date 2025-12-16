@@ -1,14 +1,24 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuid } from 'uuid';
 import type { ChatListItem } from '@/api/chat/types';
 import { useDeleteChat, useFetchChats } from '@/api/chat';
+import { useAddChat, useHasChat } from '@/hooks/use-chats-state.ts';
 
-export type UseChatListParams = { chatId: string; setChatId: (id: string) => void };
+export type UseChatListParams = {
+  chatId: string;
+  setChatId: (id: string) => void;
+  /**
+   * Set to true if "No chats selected" state should be shown
+   */
+  showStartChat?: boolean;
+};
 
-export function useChatList({ chatId, setChatId }: UseChatListParams) {
+export function useChatList({ chatId, setChatId, showStartChat = false }: UseChatListParams) {
   const [newChat, setNewChat] = useState<ChatListItem | null>(null);
   const newChatRef = useRef<ChatListItem | null>(null);
+  const hasChat = useHasChat(chatId);
 
+  const addChatToState = useAddChat();
   const { mutateAsync: deleteChatMutation } = useDeleteChat();
   const { data: chats, isLoading: isLoadingChats, refetch } = useFetchChats();
 
@@ -21,6 +31,15 @@ export function useChatList({ chatId, setChatId }: UseChatListParams) {
   useEffect(() => {
     newChatRef.current = newChat;
   });
+
+  useLayoutEffect(() => {
+    if (!hasChat && chatId && !isLoadingChats) {
+      addChatToState(chatId);
+    }
+    if (!hasChat && !chatId && !isLoadingChats && !showStartChat) {
+      addChatHandler();
+    }
+  }, [hasChat, chatId, isLoadingChats]);
 
   const chatsWithNew = useMemo(() => {
     if (chats?.some(chat => chat.id === newChat?.id)) {
@@ -45,6 +64,7 @@ export function useChatList({ chatId, setChatId }: UseChatListParams) {
       createdAt: new Date(),
       updatedAt: null,
     });
+    addChatToState(newChatID);
     return newChatID;
   };
 
@@ -78,13 +98,13 @@ export function useChatList({ chatId, setChatId }: UseChatListParams) {
   }
 
   return {
+    isNewChat: newChat?.id === chatId,
+    hasChat,
     chatId,
     setChatId,
-    chats,
-    chatsWithNew,
+    chats: chatsWithNew,
     newChat,
     setNewChat,
-    createChat,
     isLoadingChats,
     refetchChats,
     deleteChat,

@@ -23,7 +23,7 @@ from openai.types.chat import (
     ChatCompletionChunk,
 )
 
-from custom_model.config import Config
+from agentic_workflow.config import Config
 
 pass_environment = click.make_pass_decorator(AgentEnvironment)
 
@@ -139,9 +139,7 @@ def execute(
     > task cli -- execute --completion_json "example-completion.json"
     """
     if len(user_prompt) == 0 and len(completion_json) == 0:
-        raise click.UsageError(
-            "User prompt message or completion json must be provided."
-        )
+        raise click.UsageError("User prompt message or completion json must provided.")
 
     click.echo("Running agent...")
     response = environment.interface.local(
@@ -224,9 +222,7 @@ def execute_deployment(
     > task cli -- execute-deployment --completion_json "example-completion.json" --deployment_id 680a77a9a3
     """
     if len(user_prompt) == 0 and len(completion_json) == 0:
-        raise click.UsageError(
-            "User prompt message or completion json must be provided."
-        )
+        raise click.UsageError("User prompt message or completion json must provided.")
     if len(deployment_id) == 0:
         raise click.UsageError("Deployment ID must be provided.")
 

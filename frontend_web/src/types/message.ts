@@ -47,6 +47,7 @@ export type ReasoningUIPart = {
       }
   >;
 };
+
 /**
  * A tool invocation part of a message.
  */
@@ -55,7 +56,9 @@ export interface ToolInvocationData {
   toolCallId?: string;
   toolName: string;
   args: Record<string, unknown>;
+  result?: string;
 }
+
 export type ToolInvocationUIPart = {
   type: 'tool-invocation';
   /**
@@ -108,4 +111,8 @@ interface ToolCall<NAME extends string, INPUT> {
   input: INPUT;
   providerExecuted?: boolean;
   dynamic?: boolean;
+}
+
+export function isToolInvocationPart(part: ContentPart): part is ToolInvocationUIPart {
+  return part.type === 'tool-invocation';
 }

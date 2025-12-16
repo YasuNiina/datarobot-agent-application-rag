@@ -145,7 +145,9 @@ def get_custom_model_files(
 def synchronize_pyproject_dependencies():
     pyproject_toml_path = os.path.join(str(agent_application_path), "pyproject.toml")
     uv_lock_path = os.path.join(str(agent_application_path), "uv.lock")
-    custom_model_folder = str(os.path.join(str(agent_application_path), "custom_model"))
+    custom_model_folder = str(
+        os.path.join(str(agent_application_path), "agentic_workflow")
+    )
     docker_context_folder = str(
         os.path.join(str(agent_application_path), "docker_context")
     )
@@ -364,7 +366,9 @@ if session_secret_key := os.environ.get(SESSION_SECRET_KEY):
     )
 
 agent_custom_model_files = get_custom_model_files(
-    custom_model_folder=str(os.path.join(str(agent_application_path), "custom_model")),
+    custom_model_folder=str(
+        os.path.join(str(agent_application_path), "agentic_workflow")
+    ),
     runtime_parameter_values=agent_runtime_parameter_values,
 )
 
@@ -375,6 +379,7 @@ agent_custom_model = pulumi_datarobot.CustomModel(
     base_environment_version_id=agent_execution_environment.version_id,
     target_type="AgenticWorkflow",
     target_name="response",
+    resource_bundle_id="cpu.medium",
     language="python",
     use_case_ids=[use_case.id],
     files=agent_custom_model_files,

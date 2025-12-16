@@ -36,6 +36,10 @@ export interface Tool<Shape extends Record<string, unknown> = Record<string, unk
   render?: (state: ToolState<Shape>) => ReactElement;
   renderAndWait?: (state: ToolState<Shape>) => ReactElement;
   enabled?: boolean;
+  /**
+   * If true `handler` will be executed even in background chat
+   */
+  background?: boolean;
 }
 
 export interface ToolSerialized {
@@ -43,4 +47,5 @@ export interface ToolSerialized {
   description: string;
   parameters: z.core.JSONSchema.JSONSchema;
   enabled?: boolean;
+  background?: boolean;
 }

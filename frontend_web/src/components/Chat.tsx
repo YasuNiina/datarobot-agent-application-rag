@@ -11,12 +11,13 @@ export type ChatProps = {
 
 export function Chat({ initialMessages, children }: ChatProps) {
   const {
+    chatId,
     sendMessage,
     userInput,
     setUserInput,
     combinedEvents,
     progress,
-    setProgress,
+    deleteProgress,
     isLoadingHistory,
     setInitialMessages,
     isAgentRunning,
@@ -31,8 +32,8 @@ export function Chat({ initialMessages, children }: ChatProps) {
     <div className="main-section">
       {children || (
         <>
-          <ChatMessages isLoading={isLoadingHistory} messages={combinedEvents} />
-          <ChatProgress progress={progress || {}} setProgress={setProgress} />
+          <ChatMessages isLoading={isLoadingHistory} messages={combinedEvents} chatId={chatId} />
+          <ChatProgress progress={progress || {}} deleteProgress={deleteProgress} />
           <ChatTextInput
             userInput={userInput}
             setUserInput={setUserInput}

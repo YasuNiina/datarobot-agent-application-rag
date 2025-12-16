@@ -4,20 +4,25 @@ import { ChatContext } from './context';
 import { useFetchChats } from '@/api/chat';
 
 export type ChatProviderInput = {
-  agUiEndpoint: string;
   chatId: string;
-  setChatId: (id: string) => void;
   refetchChats?: () => Promise<any>;
+  runInBackground?: boolean;
+  isNewChat?: boolean;
 };
 export type ChatProviderProps = ChatProviderInput & PropsWithChildren;
 
-export function ChatProvider({ children, agUiEndpoint, chatId, setChatId }: ChatProviderProps) {
+export function ChatProvider({
+  children,
+  chatId,
+  runInBackground = false,
+  isNewChat = false,
+}: ChatProviderProps) {
   const { refetch } = useFetchChats();
   const refetchChats = refetch || (() => Promise.resolve());
   const value = useAgUiChat({
-    agUiEndpoint,
     chatId,
-    setChatId,
+    isNewChat,
+    runInBackground,
     refetchChats,
   });
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

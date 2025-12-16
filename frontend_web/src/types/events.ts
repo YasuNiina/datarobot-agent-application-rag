@@ -17,6 +17,7 @@ export type ChatStateEvent =
     }
   | {
       type: 'thinking';
+      value: ChatThinkingEvent;
     };
 
 export type ChatStateEventByType<T extends ChatStateEvent['type']> = Extract<
@@ -37,6 +38,12 @@ export type ChatErrorEvent = {
   threadId: string;
   createdAt: Date;
   error: string;
+};
+
+export type ChatThinkingEvent = {
+  id: string;
+  threadId: string;
+  createdAt: Date;
 };
 
 export type ChatMessageEvent = MessageResponse;

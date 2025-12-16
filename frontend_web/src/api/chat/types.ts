@@ -1,9 +1,6 @@
 import type { Message } from '@ag-ui/core';
 import { ContentPart, ToolInvocation } from '@/types/message.ts';
 
-// TODO: This awkwardly shoves AGUI message list into the Mastra format.
-// I didn't want to completely rewrite the UI, still figuring out where to go here.
-
 export interface ChatListItem {
   id: string;
   userId: string;
@@ -31,17 +28,17 @@ export type MessageResponse = {
   threadId?: string;
   resourceId?: string;
   type?: string;
-  format: 2;
+  content: MessageContent;
+};
+
+export type MessageContent = {
+  format: number;
   parts: ContentPart[];
   content?: string;
   toolInvocations?: ToolInvocation[];
   reasoning?: string;
   annotations?: JSONValue[] | undefined;
   metadata?: Record<string, unknown>;
-};
-
-export type MessagePage = {
-  messages: MessageResponse[];
 };
 
 export type APIChat = {
@@ -53,6 +50,12 @@ export type APIChat = {
   metadata?: Record<string, unknown>;
 };
 
+export type MessageHistoryResponse = {
+  inProgress: boolean;
+  error?: string;
+  timestamp?: number;
+} & Message;
+
 export type APIChatWithMessages = APIChat & {
-  messages: Message[];
+  messages: MessageHistoryResponse[];
 };

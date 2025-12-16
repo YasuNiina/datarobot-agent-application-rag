@@ -36,7 +36,6 @@ It supports local development and testing, as well as one-command deployments to
 
 - [Quick start](#quick-start)
   - [Install prerequisite tools](#install-prerequisite-tools)
-  - [Clone the repository](#clone-the-repository)
   - [Prepare your local development environment](#prepare-your-local-development-environment)
   - [Run your agent](#run-your-agent)
 - [Develop your agent](#develop-your-agent)
@@ -56,14 +55,14 @@ Follow the instructions in the sections below to install the prerequisite tools 
 
 ## Install prerequisite tools
 
-Ensure that you have the following tools installed and on your system at the required version (or newer).
+Before you begin, you'll need the following tools installed. Refer to the links in the table below for installation instructions for each tool.
 
 > [!TIP]
 > Make sure to install the tools **system-wide** rather than in a virtual environment so they are available in your terminal sessions.
 
 | Tool         | Version    | Description                     | Installation guide            |
 |--------------|------------|---------------------------------|-------------------------------|
-| **dr-cli**   | >= 0.2.21  | The DataRobot CLI.              | [dr-cli installation guide](https://github.com/datarobot-oss/cli?tab=readme-ov-file#installation) |
+| **dr-cli**   | >= 0.2.22  | The DataRobot CLI.              | [dr-cli installation guide](https://github.com/datarobot-oss/cli?tab=readme-ov-file#installation) |
 | **git**      | >= 2.30.0  | A version control system.       | [git installation guide](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)      |
 | **uv**       | >= 0.9.0  | A Python package manager.        | [uv installation guide](https://docs.astral.sh/uv/getting-started/installation/)       |
 | **Pulumi**   | >= 3.163.0 | An Infrastructure as Code tool. | [Pulumi installation guide](https://www.pulumi.com/docs/iac/download-install/)                   |
@@ -78,7 +77,7 @@ Ensure that you have the following tools installed and on your system at the req
 
 <details><summary><i>Click here for details on using a development container</i></summary>
 
-### Using a development container (experimental)
+### Use a development container (experimental)
 
 [Dev containers](https://containers.dev/) allow you to use a container environment for local development. They are integrated with [modern IDEs](https://containers.dev/supporting) such as VSCode and PyCharm, and the [Dev Container CLI](https://containers.dev/supporting#devcontainer-cli) allows you to integrate them with terminal-centric development workflows.
 
@@ -106,52 +105,48 @@ devcontainer up --workspace-folder . \&\& devcontainer exec --workspace-folder .
 
 </details>
 
-## Clone the repository
-
-Now that the prerequisites are installed, clone the repository:
-
-```sh
-git clone https://github.com/datarobot-community/datarobot-agent-application.git
-cd datarobot-agent-application
-```
-
 ## Prepare your local development environment
 
-Once cloning has finished, run the following command to start the local development environment.
+Run the following command to start the local development environment:
 
 ```sh
 dr start
 ```
 
-An interactive wizard will guide you through the selection of configuration options, including creating a `.env` file in the root directory and populating it with environment variables you specify.
+This command starts an interactive wizard to guide you through configuring your application. It will automatically clone the application repository and create a `.env` file in the root directory populated with environment variables you specify.
 The wizard provides guidance and context for each step, but for a detailed walkthrough of the wizard steps, click below.
 
 <details><summary><b>Click here for a detailed walkthrough of the wizard steps</b></summary>
 <br>
 
-1. Specify if you wish to use the "low-code" configuration for your local development environment. Choosing "yes" will walk you through the steps to configure your local environment using the DataRobot CLI. Choose "no" if you wish to configure your `.env` file manually.
+1. Specify whether you wish to use the "low-code" agent template:
+   - Press `y` to use the YAML-based NeMo Agent Toolkit template.
+   - Press `n` to choose a specific agent template.
 2. After a few moments, the wizard opens a web browser window to automatically configure your API endpoint and key. Click **Proceed** to continue.
+   - If the browser doesn't open automatically, look for a URL in the terminal output and open it manually.
+   - Click **Proceed** in the browser to continue.
+   - If you encounter authentication issues, ensure you're logged into DataRobot in your browser.
 3. Specify the port for the local web application and press `Enter`. The default is `8842`.
 4. If desired, specify the default execution environment for your agent and press `Enter`. The default is `[DataRobot] Python 3.11 GenAI Agents`.
 5. Provide a secret key to sign cookies for your session and press `Enter`. If you do not provide a value, a randomly-generated one will be used.
-6. Select your backend OAuth provider and press `Enter`.
-7. Specify your authorization server and press `Enter`.
+6. Enter the URI for a database to use for the application and press `Enter`. The default is `sqlite+aiosqlite:///.data/database.sqlite`.
+7. Select your backend OAuth provider and press `Enter`.
+8. Specify your authorization server by selecting it from the list and pressing `Space`. Press `Enter` to confirm.
 
-  > [!NOTE]
-  > For additional information on authorization server configuration, see the [OAuth applications documentation](docs/oauth-applications.md).
+  > NOTE: For additional information on authorization server configuration, see the [OAuth applications documentation](docs/oauth-applications.md).
 
-8. Enter a passphrase (or leave blank if you don't want to use a passphrase) for your Pulumi stack and press `Enter`.
-9. Specify a default DataRobot Use Case, if one is available, and press `Enter`. If left blank, a new Use Case will be created automatically.
-10. Specify your LLM integration and press `Enter`.
+9. Enter a passphrase (or leave blank if you don't want to use a passphrase) for your Pulumi stack and press `Enter`.
+10. Specify the ID of a DataRobot Use Case (e.g., `69331fad5e07469e7c4f5c6f`), if one is available, and press `Enter`. If left blank, a new Use Case will be created automatically.
+11. Specify your LLM integration and press `Enter`.
 
-   > [!NOTE]
-   > For additional information on LLM configuration, see the [LLM configuration documentation](docs/llm-configuration.md).
+   > NOTE: For additional information on LLM configuration, see the [LLM configuration documentation](docs/llm-configuration.md).
 
-11. Specify the port for the MCP server and press `Enter`. The default is `9000`.
-12. Review the `.env` configuration summary displayed and press `Enter` to confirm.
+12. Specify the port for the MCP server and press `Enter`. The default is `9000`.
+13. Review the `.env` configuration summary displayed and press `Enter` to confirm.
 
-   > [!NOTE]
-   > This step will take several minutes to complete.
+   > NOTE: This step will take several minutes to complete.
+
+14. Once the configuration finishes, choose a Pulumi stack to use for your application and press `Enter`. If you wish to create a new stack, press `Enter` and you will be prompted to enter a name for it.
 
 </details>
 
@@ -164,6 +159,13 @@ The wizard provides guidance and context for each step, but for a detailed walkt
 > [!TIP]
 > For detailed information about LLM configuration options, see [LLM configuration documentation](docs/llm-configuration.md).
 
+After `dr start` completes successfully, you should see:
+
+- A `.env` file in your project root
+- Your application directory created (typically named `datarobot-agent-application` or based on your application name)
+
+If you encounter any errors during setup, see the [Troubleshooting](#troubleshooting) section for help.
+
 Now that your application is configured, proceed to the next section.
 
 ## Run your agent
@@ -171,40 +173,40 @@ Now that your application is configured, proceed to the next section.
 > [!CAUTION]
 > Do not proceed to this section until you have run `dr start`, detailed in the previous section.
 
-Run one command to start all components of the application:
+Navigate to the application directory created during `dr start`:
+
+```sh
+cd datarobot-agent-application # or the custom directory name you specified during the wizard, if different
+```
+
+Then, run the following command to start all components of the application:
+
 ```sh
 task dev
 ```
 
-This starts in parallel 4 processes:
+This starts four processes, running in parallel:
 
-* Application Frontend
-* Application Backend
-* Agent
-* MCP server
+- Application frontend
+- Application backend
+- Agent
+- MCP server
 
-Each is running on a separate port, and each will autoreload when you make change.
-Go to [http://localhost:5173](http://localhost:5173/) to see your application live.
+Once all services are running:
 
-After the browser window opens, it displays your new agent, as shown in the screenshot below:
+1. Open your web browser and navigate to [http://localhost:5173](http://localhost:5173)
+2. You should see the agent application interface
+3. Try sending a test message to verify everything is working
 
-<img src="docs/img/agent-running.png" alt="Agent running"/>
-
-Enter any prompt desired and press `Enter` to see the agent respond.
-As the default agent is a blog writer, the agent will generate a blog post based on your prompt.
-When you are finished testing, close the browser window.
-You can close your terminal windows and tabs to terminate the processes.
-
-From here, move on to the next section to customize your agent.
+From here, you can start customizing your agent by adding your own logic and functionality. See the [Develop your agent](#develop-your-agent) section for more details.
 
 > [!NOTE]
-> You can also start individual services in separate terminal windows: `task agent:dev` will start just the agent.
+> You can also start individual services in separate terminal windows; for example, `task agent:dev` will start just the agent.
 
-
-<details><summary><b>Standalone agent playground</b></summary>
+<details><summary><i>Click here for details on using the Chainlit standalone agent playground</i></summary>
 
 > [!CAUTION]
-> This option is experimental. It is not supported in DataRobot Codespaces
+> This option is experimental. It is not supported in DataRobot Codespaces.
 
 If you want to test just the agent without the full application, you can use the Chainlit playground interface.
 
@@ -277,6 +279,7 @@ Outputs:
 
 # MCP server
 
+The Model Context Protocol (MCP) is an open standard that allows AI agents, such as large language models (LLMs), to discover and interact with external data sources, applications, and services in a secure and structured way.
 For detailed information about the MCP server, see [MCP server documentation](docs/mcp-server.md).
 
 # OAuth applications
@@ -358,7 +361,7 @@ The following ports are used by the application components during local developm
 
 3. **Verify environment variables**:
    - Ensure `.env` file exists in the project root
-   - Check that required variables are set (see [Prepare application](#prepare-application) section)
+   - Check that required variables are set (see [Prepare your local development environment](#prepare-your-local-development-environment) section)
 
 4. **Check logs**:
    - Review terminal output for specific error messages

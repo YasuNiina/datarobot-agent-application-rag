@@ -1,11 +1,5 @@
-import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query';
-import {
-  deleteChat,
-  getChatHistory,
-  getChats,
-  updateChat,
-  type PaginationInfo,
-} from '@/api/chat/requests';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { deleteChat, getChatHistory, getChats, updateChat } from '@/api/chat/requests';
 import { chatsKeys } from '@/api/chat/keys';
 import { selectChats, selectMessages } from '@/api/chat/selectors';
 
@@ -32,20 +26,12 @@ export function useUpdateChat() {
   });
 }
 
-export function useFetchHistory({ chatId }: { chatId: string }) {
-  return useInfiniteQuery({
-    initialPageParam: 0,
+export function useFetchHistory({ chatId, enabled = true }: { chatId: string; enabled: boolean }) {
+  return useQuery({
     queryKey: chatsKeys.history(chatId!),
-    queryFn: ({ signal, pageParam = 0 }) => getChatHistory({ signal, chatId, offset: pageParam }),
-    getNextPageParam: lastPage => getOffestFromPage(lastPage),
-    enabled: !!chatId,
+    queryFn: ({ signal }) => getChatHistory({ signal, chatId }),
+    enabled: !!chatId && enabled,
     select: selectMessages,
     staleTime,
   });
-}
-
-function getOffestFromPage(page: PaginationInfo) {
-  if (page.hasMore) {
-    return page.page + 1;
-  }
 }

@@ -1,4 +1,4 @@
-import { type Dispatch, type SetStateAction, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { CheckCircle2, Loader2, Circle, XCircle, X } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,10 +9,10 @@ const removeAfter = 2000;
 
 export function ChatProgress({
   progress,
-  setProgress,
+  deleteProgress,
 }: {
   progress: ProgressState;
-  setProgress: Dispatch<SetStateAction<ProgressState>>;
+  deleteProgress: (progressId: string) => void;
 }) {
   const progressTimeoutsRef = useRef<Record<string, any>>({});
   useEffect(() => {
@@ -21,23 +21,14 @@ export function ChatProgress({
       if (allDone && !progressTimeoutsRef.current[id]) {
         progressTimeoutsRef.current[id] = setTimeout(() => {
           console.debug('Remove progress data', id);
-          setProgress(state => {
-            const copy = { ...state };
-            delete copy[id];
-
-            return copy;
-          });
+          deleteProgress(id);
         }, removeAfter);
       }
     });
   }, [progress]);
 
   const handleClose = (id: string) => {
-    setProgress(state => {
-      const copy = { ...state };
-      delete copy[id];
-      return copy;
-    });
+    deleteProgress(id);
     // Clear timeout if exists
     if (progressTimeoutsRef.current[id]) {
       clearTimeout(progressTimeoutsRef.current[id]);

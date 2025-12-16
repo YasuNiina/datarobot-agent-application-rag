@@ -13,7 +13,10 @@ export function useAgUiTool<Shape extends Record<string, unknown>>(toolWithHandl
     return json;
   }, []);
   const name = `ui-${rest.name}`;
-  const tool = useMemo(() => ({ ...rest, name, parameters }), [rest, name, parameters]);
+  const tool = useMemo(
+    () => ({ ...rest, name, parameters }),
+    [rest.enabled, rest.background, rest.description, name, parameters]
+  );
   const context = useChatContext();
 
   useEffect(() => {
@@ -26,7 +29,7 @@ export function useAgUiTool<Shape extends Record<string, unknown>>(toolWithHandl
     return () => {
       context.removeTool(name);
     };
-  }, [tool.name, tool.description]);
+  }, [tool.name, tool.description, tool.enabled, tool.background]);
 
   useEffect(() => {
     context.updateToolHandler(name, {

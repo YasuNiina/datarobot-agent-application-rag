@@ -1,25 +1,24 @@
 ---
-name: Test web
+name: Test fastapi_server
 
 on:
   push:
     branches: ["main"]
     paths:
-      - 'web/**.py'
+      - 'fastapi_server/**.py'
 
   pull_request:
     branches: ["main"]
     paths:
-      - 'web/**.py'
+      - 'fastapi_server/**.py'
 
 jobs:
   tests:
-    name: "FastAPI: web ${{ matrix.python-version }}"
+    name: "FastAPI: fastapi_server ${{ matrix.python-version }}"
     runs-on: "ubuntu-latest"
     defaults:
       run:
-        working-directory: web
-
+        working-directory: fastapi_server
     strategy:
       matrix:
         python-version: ["3.11", "3.12", "3.13"]
@@ -31,7 +30,7 @@ jobs:
       - name: Setup uv
         uses: astral-sh/setup-uv@v6
         with:
-          working-directory: web
+          working-directory: fastapi_server
           enable-cache: true
           cache-dependency-glob: "uv.lock"
           python-version: ${{ matrix.python-version }}
@@ -43,11 +42,11 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Dependencies
-        working-directory: web
+        working-directory: fastapi_server
         run: task install
 
       - name: Run Static Checks
-        working-directory: web
+        working-directory: fastapi_server
         run: task lint-check
 
       - name: Install Frontend Dependencies
@@ -59,11 +58,11 @@ jobs:
         run: task build
 
       - name: Test
-        working-directory: web
+        working-directory: fastapi_server
         run: task test
 
       - name: Get Cover
         uses: orgoro/coverage@v3.2
         with:
-          coverageFile: web/.coverage.xml
+          coverageFile: fastapi_server/.coverage.xml
           token: ${{ secrets.GITHUB_TOKEN }}

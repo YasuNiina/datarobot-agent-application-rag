@@ -14,12 +14,13 @@ import { ThinkingEvent } from '@/components/ThinkingEvent.tsx';
 
 export type ChatMessageProps = {
   isLoading: boolean;
+  chatId: string;
   messages?: ChatStateEvent[];
 } & PropsWithChildren;
 
 const THRESHOLD = 50;
 
-export function ChatMessages({ children, messages, isLoading }: ChatMessageProps) {
+export function ChatMessages({ children, messages, isLoading, chatId }: ChatMessageProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const shouldAutoscrollRef = useRef<boolean>(true);
   const prevScrollRef = useRef<number>(0);
@@ -37,6 +38,12 @@ export function ChatMessages({ children, messages, isLoading }: ChatMessageProps
   };
 
   useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+    }
+  }, [chatId]);
+
+  useEffect(() => {
     if (scrollContainerRef.current && shouldAutoscrollRef.current) {
       scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
     }
@@ -45,7 +52,7 @@ export function ChatMessages({ children, messages, isLoading }: ChatMessageProps
   return (
     <div className="messages gap-2" ref={scrollContainerRef} onScroll={onChatScroll}>
       {isLoading ? (
-        <div className="p-4 space-y-4">
+        <div className="space-y-4">
           <Skeleton className="h-20 w-full" />
           <Skeleton className="h-20 w-full" />
           <Skeleton className="h-20 w-full" />

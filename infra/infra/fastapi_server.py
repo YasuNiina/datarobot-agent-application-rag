@@ -57,13 +57,13 @@ EXCLUDE_PATTERNS = [
 
 
 __all__ = [
-    "web_app",
-    "web_app_env_name",
-    "web_app_resource_name",
-    "web_app_runtime_parameters",
-    "web_app_source",
-    "web_application_path",
-    "get_web_app_files",
+    "fastapi_server_app",
+    "fastapi_server_app_env_name",
+    "fastapi_server_app_resource_name",
+    "fastapi_server_app_runtime_parameters",
+    "fastapi_server_app_source",
+    "fastapi_server_application_path",
+    "get_fastapi_server_app_files",
 ]
 
 
@@ -146,16 +146,16 @@ def _prep_metadata_yaml(
     )
     if not runtime_parameter_specs:
         runtime_parameter_specs = "    []"
-    with open(web_application_path / "metadata.yaml.jinja") as f:
+    with open(fastapi_server_application_path / "metadata.yaml.jinja") as f:
         template = Environment(loader=BaseLoader()).from_string(f.read())
-    (web_application_path / "metadata.yaml").write_text(
+    (fastapi_server_application_path / "metadata.yaml").write_text(
         template.render(
             additional_params=runtime_parameter_specs,
         )
     )
 
 
-def get_web_app_files(
+def get_fastapi_server_app_files(
     runtime_parameter_values: Sequence[
         pulumi_datarobot.ApplicationSourceRuntimeParameterValueArgs
         | pulumi_datarobot.CustomModelRuntimeParameterValueArgs,
@@ -166,18 +166,23 @@ def get_web_app_files(
     # When we've upgraded to Python 3.13 we can use Path.glob(reduce_symlinks=True)
     # https://docs.python.org/3.13/library/pathlib.html#pathlib.Path.glob
     source_files = []
-    for dirpath, dirnames, filenames in os.walk(web_application_path, followlinks=True):
+    for dirpath, dirnames, filenames in os.walk(
+        fastapi_server_application_path, followlinks=True
+    ):
         for filename in filenames:
             if filename == "metadata.yaml":
                 continue
             file_path = os.path.join(dirpath, filename)
-            rel_path = os.path.relpath(file_path, web_application_path)
+            rel_path = os.path.relpath(file_path, fastapi_server_application_path)
             # Convert to forward slashes for Linux destination
             rel_path = rel_path.replace(os.path.sep, "/")
             source_files.append((os.path.abspath(file_path), rel_path))
     # Add the metadata.yaml file
     source_files.append(
-        ((web_application_path / "metadata.yaml").as_posix(), "metadata.yaml")
+        (
+            (fastapi_server_application_path / "metadata.yaml").as_posix(),
+            "metadata.yaml",
+        )
     )
     source_files = [
         (file_path, file_name)
@@ -197,16 +202,16 @@ session_secret_cred = pulumi_datarobot.ApiTokenCredential(
         api_token=str(session_secret_key),
     ),
 )
-web_app_env_name: str = "DATAROBOT_APPLICATION_ID"
-web_application_path = project_dir.parent / "web"
+fastapi_server_app_env_name: str = "DATAROBOT_APPLICATION_ID"
+fastapi_server_application_path = project_dir.parent / "fastapi_server"
 
-web_app_source_args = ApplicationSourceArgs(
+fastapi_server_app_source_args = ApplicationSourceArgs(
     resource_name=f"Agentic Application Starter [{PROJECT_NAME}]",
     base_environment_id=RuntimeEnvironments.PYTHON_312_APPLICATION_BASE.value.id,
 ).model_dump(mode="json", exclude_none=True)
 
-web_app_resource_name: str = f"Agentic Application Starter [{PROJECT_NAME}]"
-web_app_runtime_parameters: list[
+fastapi_server_app_resource_name: str = f"Agentic Application Starter [{PROJECT_NAME}]"
+fastapi_server_app_runtime_parameters: list[
     pulumi_datarobot.ApplicationSourceRuntimeParameterValueArgs
 ] = (
     agent_app_runtime_parameters
@@ -227,32 +232,34 @@ web_app_runtime_parameters: list[
     ]
 )
 
-web_app_source = pulumi_datarobot.ApplicationSource(
+fastapi_server_app_source = pulumi_datarobot.ApplicationSource(
     files=frontend_web.stdout.apply(
-        lambda _: get_web_app_files(runtime_parameter_values=web_app_runtime_parameters)
+        lambda _: get_fastapi_server_app_files(
+            runtime_parameter_values=fastapi_server_app_runtime_parameters
+        )
     ),
-    runtime_parameter_values=web_app_runtime_parameters,
+    runtime_parameter_values=fastapi_server_app_runtime_parameters,
     resources=pulumi_datarobot.ApplicationSourceResourcesArgs(
         resource_label=CustomAppResourceBundles.CPU_XL.value.id,
     ),
     required_key_scope_level=required_key_scope_level,
-    **web_app_source_args,
+    **fastapi_server_app_source_args,
 )
 
-web_app = pulumi_datarobot.CustomApplication(
-    resource_name=web_app_resource_name,
-    source_version_id=web_app_source.version_id,
+fastapi_server_app = pulumi_datarobot.CustomApplication(
+    resource_name=fastapi_server_app_resource_name,
+    source_version_id=fastapi_server_app_source.version_id,
     use_case_ids=[use_case.id],
     allow_auto_stopping=True,
-    resources=web_app_source.id.apply(create_resources_args),
-    required_key_scope_level=web_app_source.required_key_scope_level,
-    opts=pulumi.ResourceOptions(depends_on=[web_app_source]),
+    resources=fastapi_server_app_source.id.apply(create_resources_args),
+    required_key_scope_level=fastapi_server_app_source.required_key_scope_level,
+    opts=pulumi.ResourceOptions(depends_on=[fastapi_server_app_source]),
 )
 
-pulumi.export(web_app_env_name, web_app.id)
+pulumi.export(fastapi_server_app_env_name, fastapi_server_app.id)
 pulumi.export(
-    web_app_resource_name,
-    web_app.application_url,
+    fastapi_server_app_resource_name,
+    fastapi_server_app.application_url,
 )
 
 DATABASE_URI: Final[str] = "DATABASE_URI"

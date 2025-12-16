@@ -110,7 +110,7 @@ export function createToolMessageFromAgUiEvent(
         {
           type: 'tool-invocation',
           toolInvocation: {
-            state: 'result',
+            state: 'call',
             args: toolCallArgs || event.rawEvent?.args || {},
             toolCallId: event.toolCallId,
             toolName: toolCallName,
@@ -127,9 +127,17 @@ export function createToolMessageFromAgUiEvent(
   return baseMessage;
 }
 
-export function createTextMessageFromUserInput(message: string, threadId: string): MessageResponse {
+export function createTextMessageFromUserInput({
+  message,
+  chatId,
+  messageId,
+}: {
+  message: string;
+  chatId: string;
+  messageId: string;
+}): MessageResponse {
   const baseMessage: MessageResponse = {
-    id: uuid(),
+    id: messageId,
     content: {
       format: 2,
       parts: [
@@ -142,7 +150,7 @@ export function createTextMessageFromUserInput(message: string, threadId: string
     },
     role: 'user',
     createdAt: new Date(),
-    threadId,
+    threadId: chatId,
     resourceId: uuid(),
   };
 
@@ -157,7 +165,7 @@ export function createCustomMessageWidget({
   toolCallName: string;
   toolCallArgs: Record<string, any>;
   threadId: string;
-}) {
+}): MessageResponse {
   const toolInvocation = {
     state: 'call',
     toolCallId: `call_${uuid()}`,
@@ -179,7 +187,7 @@ export function createCustomMessageWidget({
     createdAt: new Date(),
     threadId: threadId,
     resourceId: uuid(),
-  } as MessageResponse;
+  };
 }
 
 export function messageToStateEvent(message: MessageResponse): ChatStateEventByType<'message'> {

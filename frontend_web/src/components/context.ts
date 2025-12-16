@@ -10,7 +10,6 @@ export const ChatContext = createContext<AgUiChatReturn>({
   state: {},
   setState: () => {},
   chatId: '',
-  setChatId: () => {},
   events: [],
   setEvents: () => {},
   message: null,
@@ -28,6 +27,8 @@ export const ChatContext = createContext<AgUiChatReturn>({
   setIsAgentRunning: () => {},
   isThinking: false,
   setIsThinking: () => {},
+  deleteProgress: () => {},
+  setIsBackground: () => {},
   /*methods*/
   sendMessage: () => Promise.resolve(),
   registerOrUpdateTool: () => {},

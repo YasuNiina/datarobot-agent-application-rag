@@ -38,7 +38,7 @@ export default defineConfig({
     },
     base: base,
     build: {
-        outDir: '../web/static/',
+        outDir: '../fastapi_server/static/',
         manifest: true,
     },
     server: {

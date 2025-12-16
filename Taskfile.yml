@@ -21,9 +21,9 @@ includes:
   mcp_server:
     taskfile: ./mcp_server/Taskfile.yaml
     dir: ./mcp_server
-  web:
-    taskfile: ./web/Taskfile.yaml
-    dir: ./web
+  fastapi_server:
+    taskfile: ./fastapi_server/Taskfile.yaml
+    dir: ./fastapi_server
 
 tasks:
   default:
@@ -39,7 +39,7 @@ tasks:
       - "echo '✨ Choose your agentic framework.'"
       - |
         PYTHONWARNINGS=ignore uvx copier recopy -a .datarobot/answers/agent-agent.yml \
-        -r 11.4.16 \
+        -r 11.4.23 \
         --data base_answers_file=.datarobot/answers/base.yml \
         --data agent_app_name=agent \
         --data fastmcp_answers_file=.datarobot/answers/fastmcp-mcp_server.yml \
@@ -83,7 +83,7 @@ tasks:
         sleep 3
         task mcp_server:dev &
         sleep 3
-        task web:dev &
+        task fastapi_server:dev &
         sleep 3
         task agent:dev &
         sleep 8

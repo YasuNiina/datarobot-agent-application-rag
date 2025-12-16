@@ -69,7 +69,7 @@ tasks:
         sleep 3
         task mcp_server:dev &
         sleep 3
-        task web:dev &
+        task fastapi_server:dev &
         sleep 3
         task agent:dev &
         sleep 8

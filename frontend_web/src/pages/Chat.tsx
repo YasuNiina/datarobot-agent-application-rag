@@ -1,9 +1,7 @@
-import { Example } from '@/Example.tsx';
-import { ChatProvider } from '@/components/ChatProvider.tsx';
 import React, { useState } from 'react';
+import { ChatPage as ChatPageImplementation } from '@/components/page/ChatPage.tsx';
 
 export const ChatPage: React.FC = () => {
-  const agUiEndpoint = 'api/v1/chat';
   const [chatId, setChatId] = useState<string>(() => window.location.hash?.substring(1));
 
   const setChatIdHandler = (id: string) => {
@@ -11,9 +9,5 @@ export const ChatPage: React.FC = () => {
     window.location.hash = id;
   };
 
-  return (
-    <ChatProvider chatId={chatId} setChatId={setChatIdHandler} agUiEndpoint={agUiEndpoint}>
-      <Example />
-    </ChatProvider>
-  );
+  return <ChatPageImplementation chatId={chatId} setChatId={setChatIdHandler} />;
 };

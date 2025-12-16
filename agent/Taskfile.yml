@@ -56,7 +56,7 @@ tasks:
       - "{{.UV_CMD}} run ruff check . --fix"
       - "{{.UV_CMD}} run ruff format ."
       - "{{.UV_CMD}} run mypy --pretty ."
-      - "{{.UV_CMD}} run yamlfix custom_model"
+      - "{{.UV_CMD}} run yamlfix agentic_workflow"
     silent: true
   lint-check:
     # Hidden to avoid showing in task list, run `task --list-all` to see it

@@ -1,12 +1,13 @@
-import { Send } from 'lucide-react';
+import { Loader2, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Textarea } from '@/components/ui/textarea';
-import { Dispatch, KeyboardEvent, SetStateAction, useRef } from 'react';
+import { KeyboardEvent, useRef, useState } from 'react';
 
 export interface ChatTextInputProps {
   onSubmit: (text: string) => any;
   userInput: string;
-  setUserInput: Dispatch<SetStateAction<string>>;
+  setUserInput: (value: string) => void;
   runningAgent: boolean;
 }
 
@@ -17,8 +18,10 @@ export function ChatTextInput({
   runningAgent,
 }: ChatTextInputProps) {
   const ref = useRef<HTMLTextAreaElement>(null);
+  const [isComposing, setIsComposing] = useState(false);
+
   function keyDownHandler(e: KeyboardEvent) {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !e.shiftKey && !isComposing && !runningAgent) {
       if (e.ctrlKey || e.metaKey) {
         const el = ref.current;
         e.preventDefault();
@@ -42,18 +45,32 @@ export function ChatTextInput({
         ref={ref}
         value={userInput}
         onChange={e => setUserInput(e.target.value)}
+        onCompositionStart={() => setIsComposing(true)}
+        onCompositionEnd={() => setIsComposing(false)}
         onKeyDown={keyDownHandler}
         className="pr-12 text-area"
       ></Textarea>
-      <Button
-        type="submit"
-        onClick={() => onSubmit(userInput)}
-        className="absolute bottom-2 right-2"
-        size="icon"
-        disabled={runningAgent}
-      >
-        <Send />
-      </Button>
+      {runningAgent ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="absolute bottom-2 right-2">
+              <Button type="submit" size="icon" disabled>
+                <Loader2 className="animate-spin" />
+              </Button>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>Agent is running</TooltipContent>
+        </Tooltip>
+      ) : (
+        <Button
+          type="submit"
+          onClick={() => onSubmit(userInput)}
+          className="absolute bottom-2 right-2"
+          size="icon"
+        >
+          <Send />
+        </Button>
+      )}
     </div>
   );
 }

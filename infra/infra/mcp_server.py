@@ -208,6 +208,7 @@ else:
         programming_language="python",
         use_cases=["customModel"],
         docker_context_path=str(project_dir.parent / "mcp_server" / "docker"),
+        opts=pulumi.ResourceOptions(retain_on_delete=False),
     )
 
 # Custom Model

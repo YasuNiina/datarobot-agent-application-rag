@@ -211,4 +211,12 @@ h6 {
   body {
     @apply bg-background text-foreground;
   }
+
+  pre {
+    @apply p-4 my-2 rounded-md border border-border bg-muted/50 overflow-x-auto;
+  }
+
+  .dark pre {
+    @apply bg-muted/30;
+  }
 }

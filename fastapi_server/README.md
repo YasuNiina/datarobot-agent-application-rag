@@ -14,7 +14,7 @@
 To start the development server:
 
 ```
-uv run fastapi run --reload
+uv run fastapi_server run --reload
 ```
 
 To run tests:

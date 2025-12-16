@@ -8,9 +8,9 @@ Follow the instructions corresponding to your OAuth application provider in the 
 
 ## Google
 
-To configure Google OAuth application:
+To configure the Google OAuth application:
 
-1. Go to [Google API Console](https://console.developers.google.com/) from your Google account
+1. Go to [Google API Console](https://console.developers.google.com/) from your Google account.
 2. Navigate to **APIs & Services > Enabled APIs & services > Enable APIs and services** and search for `Drive`, and add it.
 3. Navigate to **APIs & Services > OAuth consent screen** and make sure you have your consent screen configured. You may have both `External` and `Internal` audience types.
 4. Navigate to **APIs & Services > Credentials** and click on the **Create Credentials** button. Select **OAuth client ID**.
@@ -30,7 +30,7 @@ To configure Google OAuth application:
 
 ## Box
 
-To configure Box OAuth application:
+To configure the Box OAuth application:
 
 1. Navigate to the [Box Developer Console](https://app.box.com/developers/console) from your Box account
 2. Create a new platform application, then select **Custom App** type
