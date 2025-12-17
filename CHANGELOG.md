@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 11.4.4
+- Fix not publishing fastapi_server/static directory
+
 ## 11.4.3
 - Fix devcontainers configuration
 
