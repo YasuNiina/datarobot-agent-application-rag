@@ -272,5 +272,5 @@ Taskfile.gen.yaml
 .datarobot/cli/state.yaml
 
 # Agent environment files
-*/custom_model/pyproject.toml
-*/custom_model/uv.lock
+*/agentic_workflow/pyproject.toml
+*/agentic_workflow/uv.lock

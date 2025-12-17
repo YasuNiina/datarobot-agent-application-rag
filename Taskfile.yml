@@ -12,6 +12,9 @@ includes:
   core:
     taskfile: ./core/Taskfile.yaml
     dir: ./core
+  fastapi_server:
+    taskfile: ./fastapi_server/Taskfile.yaml
+    dir: ./fastapi_server
   frontend_web:
     taskfile: ./frontend_web/Taskfile.yaml
     dir: ./frontend_web
@@ -21,9 +24,6 @@ includes:
   mcp_server:
     taskfile: ./mcp_server/Taskfile.yaml
     dir: ./mcp_server
-  fastapi_server:
-    taskfile: ./fastapi_server/Taskfile.yaml
-    dir: ./fastapi_server
 
 tasks:
   default:

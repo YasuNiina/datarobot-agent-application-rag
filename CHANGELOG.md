@@ -5,10 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased Changes
+## Unreleased
+
+## 11.4.3
+- Fix devcontainers configuration
+
+## 11.4.2
 - Rename custom_model to agentic_workflow
 - Rename web to fastapi_server
 - Fix tracing when using threading
+- Display tool invocations and results on the UI
+- Implement background chats
+- Fix mapping for chat history endpoint
 
 ## 11.4.0
 - Reduce agents to just planner and writer
