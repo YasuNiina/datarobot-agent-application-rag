@@ -14,8 +14,8 @@
 
 # /// script
 # dependencies = [
-#   "pyyaml",
-#   "psutil",
+#   "pyyaml>=6.0.3",
+#   "psutil>=7.2.1",
 # ]
 # ///
 """
@@ -209,7 +209,7 @@ class DevService:
 
         return f"{prefix}{self.port}"
 
-    def wait_for_start(self, timeout: int = 60) -> None:
+    def wait_for_start(self, timeout: int = 120) -> None:
         if self.process is None:
             raise Exception(f"Service {self.name} is not started")
 

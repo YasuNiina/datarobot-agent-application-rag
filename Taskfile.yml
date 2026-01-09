@@ -6,6 +6,9 @@ env:
 dotenv: ['.env', '.env.{{.ENV}}']
 
 includes:
+  common:
+    taskfile: ./core/task-common.yaml
+    internal: true
   agent:
     taskfile: ./agent/Taskfile.yml
     dir: ./agent
@@ -38,11 +41,14 @@ tasks:
       - dr self update
       - "echo '✨ Choose your agentic framework.'"
       - |
-        PYTHONWARNINGS=ignore dr component update -r .datarobot/answers/agent-agent.yml \
-        --vcs-ref 11.4.23 \
+        PYTHONWARNINGS=ignore uvx copier recopy -a .datarobot/answers/agent-agent.yml \
+        -r 11.4.23 \
+        --data base_answers_file=.datarobot/answers/base.yml \
         --data agent_app_name=agent \
         --data agent_development_port=8842 \
         --data include_taskfile_infra=no \
+        --data fastmcp_answers_file=.datarobot/answers/fastmcp-mcp_server.yml \
+        --data llm_answers_file=.datarobot/answers/llm-llm.yml \
         -w --quiet
       - dr task compose
       - dr dotenv setup --if-needed
@@ -75,7 +81,7 @@ tasks:
     deps:
       - auth-check
     cmds:
-      - uv run dev.py
+      - "{{.UV_CMD}} run dev.py"
 
   deploy:
     desc: "🚀 Deploy all services"

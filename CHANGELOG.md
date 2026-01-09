@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 11.4.6
+- Fix for task dev in codespaces
+- Fix for dr start procedure
+
 ## 11.4.5
 - Add release pipeline overrides
 - MCP Server migrate to use GenAI Agents image by default
