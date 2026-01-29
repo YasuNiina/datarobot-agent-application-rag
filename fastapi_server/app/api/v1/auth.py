@@ -49,6 +49,17 @@ class OAuthDataSchema(BaseModel):
     providers: list[OAuthProvider]
 
 
+class OAuthIdentityValidationSchema(BaseModel):
+    provider_id: str
+    provider_type: str
+    is_valid: bool
+    error_status_code: int | None = None
+
+
+class ValidateOAuthIdentitiesResponse(BaseModel):
+    identities: list[OAuthIdentityValidationSchema]
+
+
 class IdentitySchema(BaseModel):
     uuid: uuid.UUID
     type: str
@@ -437,6 +448,64 @@ async def get_user(
     request.session[AUTH_SESS_KEY] = user.to_auth_ctx().model_dump()
 
     return UserSchema.from_user(user)
+
+
+@auth_router.post("/oauth/validate/", responses={401: {"model": ErrorSchema}})
+async def validate_oauth_identities(
+    request: Request,
+    auth_ctx: AuthCtx[Metadata] = Depends(must_get_auth_ctx),
+) -> ValidateOAuthIdentitiesResponse:
+    """
+    Validate OAuth tokens for all connected identities by forcing a refresh.
+    Deletes identities that have been revoked (401/404/410).
+    """
+    user_repo = request.app.state.deps.user_repo
+    identity_repo = request.app.state.deps.identity_repo
+    tokens: Tokens = request.app.state.deps.tokens
+
+    user = await user_repo.get_user(user_id=int(auth_ctx.user.id))
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=ErrorSchema(
+                code=ErrorCodes.UNKNOWN_ERROR, message="User not found"
+            ).model_dump(),
+        )
+
+    results: list[OAuthIdentityValidationSchema] = []
+    deleted_any = False
+
+    for identity in user.identities:
+        # Skip non-OAuth identities
+        if identity.type == AuthSchema.OAUTH2:
+            is_valid, error_code = await tokens.validate_token(identity.to_data())
+
+            results.append(
+                OAuthIdentityValidationSchema(
+                    provider_id=identity.provider_id,
+                    provider_type=identity.provider_type,
+                    is_valid=is_valid,
+                    error_status_code=error_code,
+                )
+            )
+
+            # Delete identity if revoked (401/404/410)
+            if not is_valid and error_code in (401, 404, 410):
+                await identity_repo.delete_by_id(identity.id)
+                deleted_any = True
+                logger.info(
+                    "Deleted revoked OAuth identity",
+                    extra={"identity_id": identity.id, "user_id": user.id},
+                )
+
+    # Refresh session if any identities were deleted to keep session in sync
+    if deleted_any:
+        user = await user_repo.get_user(user_id=int(auth_ctx.user.id))
+        if user:
+            request.session[AUTH_SESS_KEY] = user.to_auth_ctx().model_dump()
+
+    return ValidateOAuthIdentitiesResponse(identities=results)
 
 
 @auth_router.post("/logout/", status_code=status.HTTP_204_NO_CONTENT)

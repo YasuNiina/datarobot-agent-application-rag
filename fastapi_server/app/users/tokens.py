@@ -97,3 +97,63 @@ class Tokens:
         )
 
         return token_data
+
+    async def validate_token(self, identity: IdentityData) -> tuple[bool, int | None]:
+        """
+        Validate if the token for an identity is still valid by forcing a refresh.
+
+        Unlike get_access_token, this always contacts the OAuth provider to verify
+        the authorization hasn't been revoked.
+
+        Returns:
+            (is_valid, error_status_code) - status_code is None if valid or if error had no HTTP status
+        """
+        identity_model = await self._identity_repo.get_identity_by_id(
+            identity_id=int(identity.id)
+        )
+
+        if identity_model is None:
+            return (False, None)
+
+        try:
+            # Force a refresh to verify the authorization is still valid
+            token_data = await self._oauth.refresh_access_token(
+                provider_id=identity_model.provider_id,
+                identity_id=identity_model.provider_identity_id,
+                refresh_token=identity_model.refresh_token,
+            )
+        except Exception as e:
+            # Try to extract HTTP status code from the exception
+            status_code = getattr(e, "status_code", None)
+            if status_code is None:
+                response = getattr(e, "response", None)
+                if response:
+                    status_code = getattr(response, "status_code", None)
+
+            logger.warning(
+                "Token validation failed",
+                extra={
+                    "identity_id": identity.id,
+                    "status_code": status_code,
+                    "error": str(e),
+                },
+            )
+            return (False, status_code)
+
+        # OAuth refresh succeeded - persist the new tokens (important for rotating refresh tokens)
+        update = IdentityUpdate(
+            access_token=token_data.access_token,
+            access_token_expires_at=token_data.expires_at,
+        )
+
+        if token_data.refresh_token:
+            update.refresh_token = token_data.refresh_token
+
+        if identity_model.id:
+            await self._identity_repo.update_identity(
+                identity_id=identity_model.id, update=update
+            )
+        else:
+            raise ValueError(f"Identity must have id {identity.id}")
+
+        return (True, None)

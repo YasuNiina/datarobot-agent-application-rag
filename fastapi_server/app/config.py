@@ -17,6 +17,7 @@ from typing import Sequence
 
 from core.telemetry.logging import FormatType, LogLevel
 from datarobot.core.config import DataRobotAppFrameworkBaseSettings
+from pydantic import Field, ValidationInfo, field_validator
 
 from app.auth.oauth import OAuthImpl
 
@@ -34,7 +35,18 @@ class Config(DataRobotAppFrameworkBaseSettings):
     log_level: LogLevel = LogLevel.INFO
     log_format: FormatType = "text"
 
-    agent_endpoint: str = "http://localhost:8842"
+    agent_port: int = Field(default=8842, ge=1, le=65535)
+    agent_endpoint: str | None = None
+
+    @field_validator("agent_endpoint", mode="before")
+    @classmethod
+    def set_agent_endpoint(cls, v: str | None, info: ValidationInfo) -> str:
+        # For local development agent_port is set. When deployed via pulumi, the agent_endpoint is
+        # set
+        if v is not None and v != "":
+            return v
+        agent_port = info.data.get("agent_port", 8842)
+        return f"http://localhost:{agent_port}"
 
     oauth_impl: OAuthImpl = OAuthImpl.DATAROBOT
     datarobot_oauth_providers: Sequence[str] = ()

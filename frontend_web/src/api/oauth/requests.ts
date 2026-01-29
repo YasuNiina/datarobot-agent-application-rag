@@ -4,6 +4,7 @@ import {
   IOAuthProviderListResponse,
   IOAuthAuthorizeResponse,
   OAuthAuthorizeCallback,
+  IValidateOAuthIdentitiesResponse,
 } from './types';
 
 /**
@@ -41,3 +42,12 @@ export async function authorizeProvider(
 
 export const getOAuthCallback = async (query: string): Promise<OAuthAuthorizeCallback> =>
   await apiClient.get(`/v1/oauth/callback/${query}`);
+
+/**
+ * Validates OAuth tokens by forcing a refresh.
+ * Backend will delete identities that have been revoked.
+ */
+export async function validateOAuthIdentities(): Promise<IValidateOAuthIdentitiesResponse> {
+  const { data } = await apiClient.post<IValidateOAuthIdentitiesResponse>(`/v1/oauth/validate/`);
+  return data;
+}

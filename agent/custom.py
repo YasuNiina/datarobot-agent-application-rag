@@ -19,8 +19,7 @@ from datarobot_genai.core.telemetry_agent import instrument
 
 instrument(framework="langgraph")
 # ruff: noqa: E402
-from agent import MyAgent
-from config import Config
+from agent import Config, MyAgent
 
 # isort: on
 # ------------------------------------------------------------------------------
@@ -119,7 +118,7 @@ def chat(
         return to_custom_model_streaming_response(
             thread_pool_executor,
             event_loop,
-            result,
+            result,  # type: ignore[arg-type]
             model=completion_create_params.get("model"),
         )
     else:
@@ -129,6 +128,6 @@ def chat(
         return to_custom_model_chat_response(
             response_text,
             pipeline_interactions,
-            usage_metrics,
+            usage_metrics,  # type: ignore[arg-type]
             model=completion_create_params.get("model"),
         )

@@ -158,6 +158,8 @@ def get_deployments_app_files(
     essential_files = [
         "app/",
         "model-metadata.yaml",
+        "pyproject.toml",
+        "uv.lock",
     ]
     source_files = []
     # Add essential files

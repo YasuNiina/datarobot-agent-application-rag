@@ -1,7 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
-import { useOauthProviders, useAuthorizeProvider } from '@/api/oauth/hooks';
+import {
+  useOauthProviders,
+  useAuthorizeProvider,
+  useValidateOAuthIdentities,
+} from '@/api/oauth/hooks';
 import { useCurrentUser } from '@/api/auth/hooks';
 import { getBaseUrl } from '@/lib/utils.ts';
 import { Button } from '@/components/ui/button';
@@ -17,6 +21,7 @@ export const SettingsSources = () => {
   const { mutate: authorizeProvider, isPending } = useAuthorizeProvider();
   const [connectingId, setConnectingId] = useState<string | null>(null);
   const { data: currentUser } = useCurrentUser();
+  const { mutate: validateOAuthIdentities } = useValidateOAuthIdentities();
 
   const connectedIds = useMemo(() => {
     if (currentUser?.identities) {
@@ -44,6 +49,11 @@ export const SettingsSources = () => {
       navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
     }
   }, [location, navigate]);
+
+  // Validate OAuth tokens on mount, refetch user if any are invalid
+  useEffect(() => {
+    validateOAuthIdentities();
+  }, [validateOAuthIdentities]);
 
   return (
     <div className="flex-1 p-8">

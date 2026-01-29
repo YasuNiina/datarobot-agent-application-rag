@@ -490,6 +490,21 @@ class TestGetCustomModelFiles:
         assert "model-metadata.yaml" in file_names
         assert len(files) == 2
 
+    def test_get_custom_model_files_excludes_docker_context(self, tmp_path):
+        import infra.agent as agent_infra
+
+        # Create files including a docker_context directory that should be excluded
+        (tmp_path / "file1.py").write_text("print('hi')")
+        docker_context_dir = tmp_path / "docker_context"
+        docker_context_dir.mkdir()
+        (docker_context_dir / "docker_file.py").write_text("print('docker')")
+
+        files = agent_infra.get_custom_model_files(str(tmp_path), [])
+        file_names = [f[1] for f in files]
+
+        assert "file1.py" in file_names
+        assert "docker_context/docker_file.py" not in file_names
+
     def test_get_custom_model_files_symlinks(self, tmp_path):
         import infra.agent as agent_infra
 
@@ -520,27 +535,20 @@ dependencies = ["requests>=2.0"]
         (tmp_path / "pyproject.toml").write_text(pyproject_content)
         (tmp_path / "uv.lock").write_text("test content")
 
-        # Create agentic_workflow and docker_context directories
-        (tmp_path / "agentic_workflow").mkdir()
+        # Create docker_context directory
         (tmp_path / "docker_context").mkdir()
 
         # Call the function
         agent_infra.synchronize_pyproject_dependencies()
 
-        # Check that pyproject.toml was copied to both directories
-        assert (tmp_path / "agentic_workflow" / "pyproject.toml").exists()
+        # Check that pyproject.toml was copied to docker_context
         assert (tmp_path / "docker_context" / "pyproject.toml").exists()
-        assert (tmp_path / "agentic_workflow" / "uv.lock").exists()
         assert (tmp_path / "docker_context" / "uv.lock").exists()
 
         # Verify the content is the same
         assert (
-            tmp_path / "agentic_workflow" / "pyproject.toml"
-        ).read_text() == pyproject_content
-        assert (
             tmp_path / "docker_context" / "pyproject.toml"
         ).read_text() == pyproject_content
-        assert (tmp_path / "agentic_workflow" / "uv.lock").read_text() == "test content"
         assert (tmp_path / "docker_context" / "uv.lock").read_text() == "test content"
 
     def test_synchronize_pyproject_dependencies_no_pyproject(
@@ -551,41 +559,14 @@ dependencies = ["requests>=2.0"]
         # Mock the application path to point to our tmp_path
         monkeypatch.setattr(agent_infra, "agent_application_path", tmp_path)
 
-        # Create agentic_workflow and docker_context directories but no pyproject.toml
-        (tmp_path / "agentic_workflow").mkdir()
+        # Create docker_context directory but no pyproject.toml
         (tmp_path / "docker_context").mkdir()
 
         # Call the function - should return early without error
         agent_infra.synchronize_pyproject_dependencies()
 
         # Check that no pyproject.toml files were created
-        assert not (tmp_path / "agentic_workflow" / "pyproject.toml").exists()
         assert not (tmp_path / "docker_context" / "pyproject.toml").exists()
-
-    def test_synchronize_pyproject_dependencies_missing_agentic_workflow_dir(
-        self, tmp_path, monkeypatch
-    ):
-        import infra.agent as agent_infra
-
-        # Mock the application path to point to our tmp_path
-        monkeypatch.setattr(agent_infra, "agent_application_path", tmp_path)
-
-        # Create pyproject.toml and docker_context directory but not agentic_workflow
-        pyproject_content = """[project]
-name = "test-project"
-"""
-        (tmp_path / "pyproject.toml").write_text(pyproject_content)
-        (tmp_path / "docker_context").mkdir()
-
-        # Call the function
-        agent_infra.synchronize_pyproject_dependencies()
-
-        # Check that pyproject.toml was only copied to docker_context
-        assert not (tmp_path / "agentic_workflow").exists()
-        assert (tmp_path / "docker_context" / "pyproject.toml").exists()
-        assert (
-            tmp_path / "docker_context" / "pyproject.toml"
-        ).read_text() == pyproject_content
 
     def test_synchronize_pyproject_dependencies_missing_docker_context_dir(
         self, tmp_path, monkeypatch
@@ -595,22 +576,17 @@ name = "test-project"
         # Mock the application path to point to our tmp_path
         monkeypatch.setattr(agent_infra, "agent_application_path", tmp_path)
 
-        # Create pyproject.toml and agentic_workflow directory but not docker_context
+        # Create pyproject.toml but not docker_context
         pyproject_content = """[project]
 name = "test-project"
 """
         (tmp_path / "pyproject.toml").write_text(pyproject_content)
-        (tmp_path / "agentic_workflow").mkdir()
 
         # Call the function
         agent_infra.synchronize_pyproject_dependencies()
 
-        # Check that pyproject.toml was only copied to agentic_workflow
-        assert (tmp_path / "agentic_workflow" / "pyproject.toml").exists()
+        # Check that no docker_context directory was created
         assert not (tmp_path / "docker_context").exists()
-        assert (
-            tmp_path / "agentic_workflow" / "pyproject.toml"
-        ).read_text() == pyproject_content
 
     def test_synchronize_pyproject_dependencies_overwrites_existing(
         self, tmp_path, monkeypatch
@@ -627,23 +603,18 @@ dependencies = ["requests>=3.0"]
 """
         (tmp_path / "pyproject.toml").write_text(new_content)
 
-        # Create directories with existing pyproject.toml files
-        (tmp_path / "agentic_workflow").mkdir()
+        # Create docker_context directory with existing pyproject.toml file
         (tmp_path / "docker_context").mkdir()
 
         old_content = """[project]
 name = "old-project"
 """
-        (tmp_path / "agentic_workflow" / "pyproject.toml").write_text(old_content)
         (tmp_path / "docker_context" / "pyproject.toml").write_text(old_content)
 
         # Call the function
         agent_infra.synchronize_pyproject_dependencies()
 
-        # Check that the old files were overwritten with new content
-        assert (
-            tmp_path / "agentic_workflow" / "pyproject.toml"
-        ).read_text() == new_content
+        # Check that the old file was overwritten with new content
         assert (
             tmp_path / "docker_context" / "pyproject.toml"
         ).read_text() == new_content
@@ -651,13 +622,13 @@ name = "old-project"
 
 class TestMaybeImportFromModule:
     @pytest.fixture
-    def skip_if_no_fastmcp(self):
-        """Skip tests if fastmcp module is not available."""
+    def skip_if_no_mcp(self):
+        """Skip tests if mcp module is not available."""
         mcp_module = "mcp_server"
         if not mcp_module:
             pytest.skip("Skipping tests of existing MCP when module is not provided.")
 
-    @pytest.mark.usefixtures("skip_if_no_fastmcp")
+    @pytest.mark.usefixtures("skip_if_no_mcp")
     def test_maybe_import_from_module_success(self):
         """Test that maybe_import_from_module successfully imports an existing module."""
         import infra.agent as agent_infra
@@ -776,7 +747,7 @@ class TestGenerateMetadataYaml:
             MagicMock(key="PARAM_WITH_UNDERSCORE_123", type="string"),
         ]
 
-        # Call the function with tmp_path as the agentic_workflow folder
+        # Call the function with tmp_path as the custom model folder
         agent_infra._generate_metadata_yaml("agent", str(tmp_path), mock_params)
 
         # Read and parse the generated YAML

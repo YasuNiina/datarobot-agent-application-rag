@@ -6,8 +6,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
-
-## 11.4.7
 - Fix empty last name validation issue in user create for fastapi_server backend
 - Fix for Taskfile removed in derived repositories
 - Fix missing trailing slash for URL service links in terminal print for task dev
@@ -18,6 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed Chainlit ui
 - Switch root `task dev` to use shared `drdev` from `datarobot`
 - Added MCP configuration options to select specific tools
+- Make agent package flat
+- Configuration of the local development port of the agent is done via the AGENT_PORT instead of the AGENT_ENDPOINT environment variable
+- Add `agent/AGENTS.md` documentation describing how to customize and extend the default LangGraph agent
+- Introduce Pulumi LLM infrastructure options for both LLM Gateway–backed models and existing registered LLM deployments
+- Open source MCP server AF component
+- Move the Gdrive tools to the DR GEN AI library.
+- Upgrade drmcp dependency to include integration tools: Gdrive, Microsoft SharePoint, Jira and Confluence
+- Add Microsoft OAuth support
 
 ## 11.4.6
 - Fix for task dev in codespaces

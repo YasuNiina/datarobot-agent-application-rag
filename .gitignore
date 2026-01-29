@@ -211,6 +211,9 @@ cmake-build-*/
 # Mongo Explorer plugin
 .idea/**/mongoSettings.xml
 
+# Copilot plugin
+.idea/copilot.*
+
 # File-based project format
 *.iws
 
@@ -274,5 +277,3 @@ Taskfile.gen.yaml
 # Agent environment files
 agent/uv.lock
 infra/uv.lock
-*/agentic_workflow/pyproject.toml
-*/agentic_workflow/uv.lock

@@ -20,3 +20,14 @@ export interface OAuthAuthorizeCallback {
   isError: boolean;
   error: Record<string, unknown> | null;
 }
+
+export interface IOAuthIdentityValidation {
+  provider_id: string;
+  provider_type: string;
+  is_valid: boolean;
+  error_status_code: number | null;
+}
+
+export interface IValidateOAuthIdentitiesResponse {
+  identities: IOAuthIdentityValidation[];
+}

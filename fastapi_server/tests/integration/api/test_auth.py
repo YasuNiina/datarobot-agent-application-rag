@@ -25,12 +25,13 @@ from app.api.v1.auth import (
     OAuthProviderListSchema,
     OAuthRedirectSchema,
     UserSchema,
+    ValidateOAuthIdentitiesResponse,
     validate_dr_api_key,
 )
 from app.auth.api_key import DRUser
 from app.auth.ctx import get_auth_ctx, must_get_auth_ctx
 from app.auth.session import get_oauth_sess_key
-from app.users.identity import AuthSchema
+from app.users.identity import AuthSchema, IdentityCreate
 from app.users.identity import Identity as AppIdentity
 from app.users.user import User as AppUser
 from app.users.user import UserCreate
@@ -401,3 +402,89 @@ async def test__auth__oauth_callback__multiple_requests_same_code(
             assert mock_exchange_code.call_count == 2, (
                 f"exchange_code should be called twice, got {mock_exchange_code.call_count} calls"
             )
+
+
+async def test__auth__validate_oauth_identities__success(
+    db_deps: Deps,
+    auth_ctx: AuthCtx[Metadata],
+) -> None:
+    """Test that validate endpoint returns valid status for working tokens."""
+    # Create a user with an OAuth identity
+    app_user = await db_deps.user_repo.create_user(
+        UserCreate(
+            email=auth_ctx.user.email,
+            first_name="Test",
+            last_name="User",
+        )
+    )
+    auth_ctx.user.id = str(app_user.id)
+
+    await db_deps.identity_repo.create_identity(
+        IdentityCreate(
+            user_id=app_user.id,
+            provider_id="google",
+            provider_type="google",
+            provider_user_id="google-user-id",
+            refresh_token="valid-refresh-token",
+        )
+    )
+
+    # Mock successful token validation
+    db_deps.tokens.validate_token.return_value = (True, None)  # type: ignore[attr-defined]
+
+    webapp = create_app(config=db_deps.config, deps=db_deps)
+    webapp.dependency_overrides[must_get_auth_ctx] = dep(auth_ctx)
+
+    with TestClient(webapp) as client:
+        resp = client.post("/api/v1/oauth/validate/")
+        assert resp.status_code == 200, resp.text
+
+        data = ValidateOAuthIdentitiesResponse(**resp.json())
+        assert len(data.identities) == 1
+        assert data.identities[0].is_valid is True
+        assert data.identities[0].provider_id == "google"
+
+
+async def test__auth__validate_oauth_identities__revoked_deletes_identity(
+    db_deps: Deps,
+    auth_ctx: AuthCtx[Metadata],
+) -> None:
+    """Test that validate endpoint deletes identity when token is revoked (401)."""
+    # Create a user with an OAuth identity
+    app_user = await db_deps.user_repo.create_user(
+        UserCreate(
+            email=auth_ctx.user.email,
+            first_name="Test",
+            last_name="User",
+        )
+    )
+    auth_ctx.user.id = str(app_user.id)
+
+    identity = await db_deps.identity_repo.create_identity(
+        IdentityCreate(
+            user_id=app_user.id,
+            provider_id="google",
+            provider_type="google",
+            provider_user_id="google-user-id",
+            refresh_token="revoked-refresh-token",
+        )
+    )
+
+    # Mock 401 error (revoked token)
+    db_deps.tokens.validate_token.return_value = (False, 401)  # type: ignore[attr-defined]
+
+    webapp = create_app(config=db_deps.config, deps=db_deps)
+    webapp.dependency_overrides[must_get_auth_ctx] = dep(auth_ctx)
+
+    with TestClient(webapp) as client:
+        resp = client.post("/api/v1/oauth/validate/")
+        assert resp.status_code == 200, resp.text
+
+        data = ValidateOAuthIdentitiesResponse(**resp.json())
+        assert len(data.identities) == 1
+        assert data.identities[0].is_valid is False
+        assert data.identities[0].error_status_code == 401
+
+    # Verify identity was deleted
+    deleted_identity = await db_deps.identity_repo.get_identity_by_id(identity.id)
+    assert deleted_identity is None
