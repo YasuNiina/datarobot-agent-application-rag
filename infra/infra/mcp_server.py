@@ -496,7 +496,7 @@ base_prediction_environment = pulumi_datarobot.PredictionEnvironment(
     resource_name=mcp_server_asset_name + " Prediction Environment",
     name=mcp_server_asset_name,
     platform=dr.enums.PredictionEnvironmentPlatform.DATAROBOT_SERVERLESS,
-    opts=pulumi.ResourceOptions(retain_on_delete=True),
+    opts=pulumi.ResourceOptions(retain_on_delete=False),
 )
 
 # Deploy the registered custom model

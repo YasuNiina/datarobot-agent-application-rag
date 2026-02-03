@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Move the Gdrive tools to the DR GEN AI library.
 - Upgrade drmcp dependency to include integration tools: Gdrive, Microsoft SharePoint, Jira and Confluence
 - Add Microsoft OAuth support
+- Updated `agent/AGENTS.md` and added root level `AGENTS.md` file with the instructions on how to implement/deploy agents using supported AI frameworks
 
 ## 11.4.6
 - Fix for task dev in codespaces

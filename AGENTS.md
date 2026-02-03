@@ -6,15 +6,6 @@ These instructions apply to all agents working in this repository.
 
 **IMPORTANT**: All shell commands must be executed from the project root directory.
 
-## Project Initialization
-
-**CRITICAL**
-Run the following command to initialize the project
-
-```shell
-dr start
-```
-
 ## Run Project Locally
 
 Run the following shell commands to run the project locally
