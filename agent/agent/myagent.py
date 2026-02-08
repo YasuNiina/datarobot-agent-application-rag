@@ -28,10 +28,12 @@ config = Config()
 
 
 class MyAgent(LangGraphAgent):
-    """RAG agent that answers questions using a DataRobot RAG deployment.
+    """Advanced RAG agent with query optimization, search, and answer refinement.
 
-    Queries the DataRobot RAG deployment through the MCP tool to search
-    internal documents / knowledge bases and return answers with citations.
+    Uses a three-node workflow:
+      1. Query Optimizer  – rewrites the user's question into search-friendly terms.
+      2. RAG Searcher     – calls the RAG deployment to retrieve relevant chunks.
+      3. Answer Refiner   – evaluates retrieved chunks and generates a refined answer.
     """
 
     @property
@@ -40,9 +42,14 @@ class MyAgent(LangGraphAgent):
             MessagesState, None, MessagesState, MessagesState
         ](MessagesState)
 
-        langgraph_workflow.add_node("rag_agent", self.agent_rag)
-        langgraph_workflow.add_edge(START, "rag_agent")
-        langgraph_workflow.add_edge("rag_agent", END)
+        langgraph_workflow.add_node("query_optimizer", self.agent_query_optimizer)
+        langgraph_workflow.add_node("rag_searcher", self.agent_rag_searcher)
+        langgraph_workflow.add_node("answer_refiner", self.agent_answer_refiner)
+
+        langgraph_workflow.add_edge(START, "query_optimizer")
+        langgraph_workflow.add_edge("query_optimizer", "rag_searcher")
+        langgraph_workflow.add_edge("rag_searcher", "answer_refiner")
+        langgraph_workflow.add_edge("answer_refiner", END)
 
         return langgraph_workflow  # type: ignore[return-value]
 
@@ -94,31 +101,100 @@ class MyAgent(LangGraphAgent):
             max_retries=3,
         )
 
+    # ------------------------------------------------------------------
+    # Node 1: Query Optimizer
+    # ------------------------------------------------------------------
+
     @property
-    def agent_rag(self) -> Any:
-        """RAG agent node that searches knowledge bases and answers questions."""
+    def agent_query_optimizer(self) -> Any:
+        """Rewrites the user's question into an optimized vector-search query."""
         return create_react_agent(
             self.llm(),
             tools=self.mcp_tools,
             prompt=make_system_prompt(
-                "You are a knowledgeable assistant that answers questions based on "
-                "internal documents and knowledge bases.\n"
+                "You are a search query optimization specialist.\n"
                 "\n"
-                "When a user asks a question, use the query_datarobot_rag tool to "
-                "search for relevant documents and retrieve an answer. If the user's "
-                "question requires follow-up context from previous messages, use the "
-                "query_datarobot_rag_with_context tool instead.\n"
+                "Your task is to rewrite the user's question into an optimized query "
+                "for vector database retrieval. Follow these rules:\n"
+                "1. Remove greetings, filler words, and unnecessary context.\n"
+                "2. Extract key concepts, entities, and technical terms.\n"
+                "3. Include synonyms or related terms that might appear in documents.\n"
+                "4. If the conversation history suggests the question is a follow-up, "
+                "resolve pronouns and references (e.g., replace 'it' or 'that' with "
+                "the actual subject from previous messages).\n"
+                "5. Keep the query concise but comprehensive.\n"
+                "6. Maintain the language of the original question.\n"
                 "\n"
-                "Guidelines:\n"
-                "1. Always use the RAG tool to search for information before answering.\n"
-                "2. IMPORTANT: Pass the user's question exactly as-is to the RAG tool's "
-                "'question' parameter. Do NOT rephrase, summarize, translate, or modify "
-                "the user's original question in any way.\n"
-                "3. Include citation references from the tool's response in your answer.\n"
-                "4. If the RAG tool does not return relevant information, honestly tell "
-                "the user that the information was not found in the knowledge base.\n"
-                "5. Do not fabricate information. Only use facts from the retrieved documents.\n"
-                "6. Answer in the same language as the user's question.",
+                "Output ONLY the optimized search query text. Do NOT answer the "
+                "question yourself, do NOT add any explanation, and do NOT use any tools.",
             ),
-            name="RAG Agent",
+            name="Query Optimizer",
+        )
+
+    # ------------------------------------------------------------------
+    # Node 2: RAG Searcher
+    # ------------------------------------------------------------------
+
+    @property
+    def agent_rag_searcher(self) -> Any:
+        """Searches the knowledge base using the optimized query."""
+        return create_react_agent(
+            self.llm(),
+            tools=self.mcp_tools,
+            prompt=make_system_prompt(
+                "You are a document search agent.\n"
+                "\n"
+                "The previous assistant message contains an optimized search query. "
+                "Your job is to use that query to search the knowledge base.\n"
+                "\n"
+                "Instructions:\n"
+                "1. Extract the optimized search query from the previous assistant message.\n"
+                "2. Call the query_datarobot_rag tool with that query as the 'question' "
+                "parameter. Do NOT modify the query.\n"
+                "3. Return the complete tool response including all references and "
+                "citations exactly as received. Do NOT summarize or rewrite the results.\n"
+                "\n"
+                "If the user's question seems to be a follow-up that requires "
+                "conversation context, use query_datarobot_rag_with_context instead.",
+            ),
+            name="RAG Searcher",
+        )
+
+    # ------------------------------------------------------------------
+    # Node 3: Answer Refiner
+    # ------------------------------------------------------------------
+
+    @property
+    def agent_answer_refiner(self) -> Any:
+        """Evaluates retrieved chunks and generates a refined answer."""
+        return create_react_agent(
+            self.llm(),
+            tools=self.mcp_tools,
+            prompt=make_system_prompt(
+                "You are an answer quality specialist.\n"
+                "\n"
+                "You have access to the following context from earlier in this "
+                "conversation:\n"
+                "- The user's ORIGINAL question (the first human message).\n"
+                "- Search results with references retrieved from the knowledge base "
+                "(in the previous assistant message).\n"
+                "\n"
+                "Your task:\n"
+                "1. EVALUATE: Review each reference/citation from the search results. "
+                "Determine which references are genuinely relevant to the user's "
+                "original question and which are not.\n"
+                "2. GENERATE: Compose a comprehensive answer using ONLY information "
+                "from the relevant references. Include numbered citation markers "
+                "(e.g., [1], [2]) when referencing specific sources.\n"
+                "3. CITE: Append a References section at the end listing the sources "
+                "you actually used.\n"
+                "\n"
+                "Rules:\n"
+                "- Do NOT use any tools. Work only with the information already provided.\n"
+                "- Do NOT fabricate information. If no relevant information was found, "
+                "honestly tell the user.\n"
+                "- Answer in the same language as the user's original question.\n"
+                "- Be comprehensive but concise.",
+            ),
+            name="Answer Refiner",
         )
