@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from datetime import datetime
 from typing import Any
 
 from datarobot_genai.core.agents import (
@@ -29,10 +28,10 @@ config = Config()
 
 
 class MyAgent(LangGraphAgent):
-    """MyAgent is a custom agent that uses Langgraph to plan, write, and edit content.
-    It utilizes DataRobot's LLM Gateway or a specific deployment for language model interactions.
-    This example illustrates 3 agents that handle content creation tasks, including planning, writing,
-    and editing blog posts.
+    """RAG agent that answers questions using a DataRobot RAG deployment.
+
+    Queries the DataRobot RAG deployment through the MCP tool to search
+    internal documents / knowledge bases and return answers with citations.
     """
 
     @property
@@ -40,11 +39,11 @@ class MyAgent(LangGraphAgent):
         langgraph_workflow = StateGraph[
             MessagesState, None, MessagesState, MessagesState
         ](MessagesState)
-        langgraph_workflow.add_node("planner_node", self.agent_planner)
-        langgraph_workflow.add_node("writer_node", self.agent_writer)
-        langgraph_workflow.add_edge(START, "planner_node")
-        langgraph_workflow.add_edge("planner_node", "writer_node")
-        langgraph_workflow.add_edge("writer_node", END)
+
+        langgraph_workflow.add_node("rag_agent", self.agent_rag)
+        langgraph_workflow.add_edge(START, "rag_agent")
+        langgraph_workflow.add_edge("rag_agent", END)
+
         return langgraph_workflow  # type: ignore[return-value]
 
     @property
@@ -53,8 +52,7 @@ class MyAgent(LangGraphAgent):
             [
                 (
                     "user",
-                    f"The topic is {{topic}}. Make sure you find any interesting and "
-                    f"relevant information given the current year is {datetime.now().year}.",
+                    "{topic}",
                 ),
             ]
         )
@@ -97,48 +95,27 @@ class MyAgent(LangGraphAgent):
         )
 
     @property
-    def agent_planner(self) -> Any:
+    def agent_rag(self) -> Any:
+        """RAG agent node that searches knowledge bases and answers questions."""
         return create_react_agent(
-            self.llm(preferred_model="datarobot/azure/gpt-5-mini-2025-08-07"),
+            self.llm(),
             tools=self.mcp_tools,
             prompt=make_system_prompt(
-                "You are a content planner. You create brief, structured outlines for blog articles. "
-                "You identify the most important points and cite relevant sources. Keep it simple and to the point - "
-                "this is just an outline for the writer.\n"
+                "You are a knowledgeable assistant that answers questions based on "
+                "internal documents and knowledge bases.\n"
                 "\n"
-                "You have access to tools that can help you research and gather information. Use these tools when "
-                "required to collect accurate and up-to-date information about the topic for your planning and research.\n"
+                "When a user asks a question, use the query_datarobot_rag tool to "
+                "search for relevant documents and retrieve an answer. If the user's "
+                "question requires follow-up context from previous messages, use the "
+                "query_datarobot_rag_with_context tool instead.\n"
                 "\n"
-                "Create a simple outline with:\n"
-                "1. 10-15 key points or facts (bullet points only, no paragraphs)\n"
-                "2. 2-3 relevant sources or references\n"
-                "3. A brief suggested structure (intro, 2-3 sections, conclusion)\n"
-                "\n"
-                "Do NOT write paragraphs or detailed explanations. Just provide a focused list.",
+                "Guidelines:\n"
+                "1. Always use the RAG tool to search for information before answering.\n"
+                "2. Include citation references from the tool's response in your answer.\n"
+                "3. If the RAG tool does not return relevant information, honestly tell "
+                "the user that the information was not found in the knowledge base.\n"
+                "4. Do not fabricate information. Only use facts from the retrieved documents.\n"
+                "5. Answer in the same language as the user's question.",
             ),
-            name="Planner Agent",
-        )
-
-    @property
-    def agent_writer(self) -> Any:
-        return create_react_agent(
-            self.llm(preferred_model="datarobot/azure/gpt-5-mini-2025-08-07"),
-            tools=self.mcp_tools,
-            prompt=make_system_prompt(
-                "You are a content writer working with a planner colleague.\n"
-                "You write opinion pieces based on the planner's outline and context. You provide objective and "
-                "impartial insights backed by the planner's information. You acknowledge when your statements are "
-                "opinions versus objective facts.\n"
-                "\n"
-                "You have access to tools that can help you verify facts and gather additional supporting information. "
-                "Use these tools when required to ensure accuracy and find relevant details while writing.\n"
-                "\n"
-                "1. Use the content plan to craft a compelling blog post.\n"
-                "2. Structure with an engaging introduction, insightful body, and summarizing conclusion.\n"
-                "3. Sections/Subtitles are properly named in an engaging manner.\n"
-                "4. CRITICAL: Keep the total output under 500 words. Each section should have 1-2 brief paragraphs.\n"
-                "\n"
-                "Write in markdown format, ready for publication.",
-            ),
-            name="Writer Agent",
+            name="RAG Agent",
         )
