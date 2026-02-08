@@ -59,3 +59,16 @@ runtimeParameterDefinitions:
   - fieldName: SESSION_SECRET_KEY
     type: credential
     credentialType: api_token
+  - fieldName: dr_rag_deployment_id
+    type: string
+    description: The DataRobot RAG deployment ID.
+  - fieldName: dr_rag_endpoint
+    type: string
+    description: The DataRobot API endpoint for RAG (defaults to DATAROBOT_ENDPOINT).
+  - fieldName: dr_rag_api_token
+    type: credential
+    credentialType: api_token
+    description: The DataRobot API token for RAG (defaults to DATAROBOT_API_TOKEN).
+  - fieldName: dr_rag_system_prompt
+    type: string
+    description: Optional system prompt for RAG queries.
