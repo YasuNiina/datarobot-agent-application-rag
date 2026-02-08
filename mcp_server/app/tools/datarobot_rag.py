@@ -33,6 +33,15 @@ DR_RAG_API_TOKEN = os.environ.get(
     "DR_RAG_API_TOKEN", os.environ.get("DATAROBOT_API_TOKEN", "")
 )
 
+# Only register as MCP tools when the RAG deployment is configured.
+# When not configured, functions remain defined (for testing) but are not
+# exposed through the MCP server.
+if not DR_RAG_DEPLOYMENT_ID:
+    logger.info(
+        "DR_RAG_DEPLOYMENT_ID is not set; RAG query tools will not be registered."
+    )
+_register_tool = dr_mcp_tool() if DR_RAG_DEPLOYMENT_ID else (lambda f: f)
+
 # Model name constant for DataRobot's OpenAI-compatible endpoint
 DEFAULT_CHAT_MODEL_NAME = "datarobot-deployed-llm"
 
@@ -74,7 +83,7 @@ def _format_citations(citations: list[dict[str, object]]) -> str:
     return "\n".join(parts)
 
 
-@dr_mcp_tool()
+@_register_tool
 async def query_datarobot_rag(question: str) -> str:
     """Query the DataRobot RAG deployment and get an answer with citations.
 
@@ -124,7 +133,7 @@ async def query_datarobot_rag(question: str) -> str:
     return content + citation_text
 
 
-@dr_mcp_tool()
+@_register_tool
 async def query_datarobot_rag_with_context(
     question: str,
     conversation_history: str = "",
