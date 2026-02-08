@@ -111,11 +111,14 @@ class MyAgent(LangGraphAgent):
                 "\n"
                 "Guidelines:\n"
                 "1. Always use the RAG tool to search for information before answering.\n"
-                "2. Include citation references from the tool's response in your answer.\n"
-                "3. If the RAG tool does not return relevant information, honestly tell "
+                "2. IMPORTANT: Pass the user's question exactly as-is to the RAG tool's "
+                "'question' parameter. Do NOT rephrase, summarize, translate, or modify "
+                "the user's original question in any way.\n"
+                "3. Include citation references from the tool's response in your answer.\n"
+                "4. If the RAG tool does not return relevant information, honestly tell "
                 "the user that the information was not found in the knowledge base.\n"
-                "4. Do not fabricate information. Only use facts from the retrieved documents.\n"
-                "5. Answer in the same language as the user's question.",
+                "5. Do not fabricate information. Only use facts from the retrieved documents.\n"
+                "6. Answer in the same language as the user's question.",
             ),
             name="RAG Agent",
         )
