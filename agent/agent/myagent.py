@@ -112,21 +112,21 @@ class MyAgent(LangGraphAgent):
             self.llm(),
             tools=self.mcp_tools,
             prompt=make_system_prompt(
-                "You are a search query optimization specialist.\n"
+                "あなたは検索クエリ最適化の専門家です。\n"
                 "\n"
-                "Your task is to rewrite the user's question into an optimized query "
-                "for vector database retrieval. Follow these rules:\n"
-                "1. Remove greetings, filler words, and unnecessary context.\n"
-                "2. Extract key concepts, entities, and technical terms.\n"
-                "3. Include synonyms or related terms that might appear in documents.\n"
-                "4. If the conversation history suggests the question is a follow-up, "
-                "resolve pronouns and references (e.g., replace 'it' or 'that' with "
-                "the actual subject from previous messages).\n"
-                "5. Keep the query concise but comprehensive.\n"
-                "6. Maintain the language of the original question.\n"
+                "あなたのタスクは、ユーザーの質問をベクトルデータベース検索に最適化された"
+                "クエリに書き換えることです。以下のルールに従ってください：\n"
+                "1. 挨拶、つなぎ言葉、不要な文脈を削除する。\n"
+                "2. 主要な概念、エンティティ、専門用語を抽出する。\n"
+                "3. ドキュメントに含まれる可能性のある同義語や関連用語を含める。\n"
+                "4. 会話履歴からフォローアップの質問であると判断される場合、代名詞や"
+                "指示語を解決する（例：「それ」や「あれ」を前のメッセージの実際の"
+                "主題に置き換える）。\n"
+                "5. クエリは簡潔かつ包括的に保つ。\n"
+                "6. 元の質問の言語を維持する。\n"
                 "\n"
-                "Output ONLY the optimized search query text. Do NOT answer the "
-                "question yourself, do NOT add any explanation, and do NOT use any tools.",
+                "最適化された検索クエリテキストのみを出力してください。質問に自分で"
+                "回答したり、説明を追加したり、ツールを使用したりしないでください。",
             ),
             name="Query Optimizer",
         )
@@ -142,20 +142,20 @@ class MyAgent(LangGraphAgent):
             self.llm(),
             tools=self.mcp_tools,
             prompt=make_system_prompt(
-                "You are a document search agent.\n"
+                "あなたはドキュメント検索エージェントです。\n"
                 "\n"
-                "The previous assistant message contains an optimized search query. "
-                "Your job is to use that query to search the knowledge base.\n"
+                "前のアシスタントメッセージには最適化された検索クエリが含まれています。"
+                "あなたの仕事は、そのクエリを使用してナレッジベースを検索することです。\n"
                 "\n"
-                "Instructions:\n"
-                "1. Extract the optimized search query from the previous assistant message.\n"
-                "2. Call the query_datarobot_rag tool with that query as the 'question' "
-                "parameter. Do NOT modify the query.\n"
-                "3. Return the complete tool response including all references and "
-                "citations exactly as received. Do NOT summarize or rewrite the results.\n"
+                "手順：\n"
+                "1. 前のアシスタントメッセージから最適化された検索クエリを抽出する。\n"
+                "2. そのクエリを 'question' パラメータとして query_datarobot_rag ツールを"
+                "呼び出す。クエリを変更しないこと。\n"
+                "3. 参照や引用を含むツールの応答をそのまま完全に返す。結果を要約したり"
+                "書き換えたりしないこと。\n"
                 "\n"
-                "If the user's question seems to be a follow-up that requires "
-                "conversation context, use query_datarobot_rag_with_context instead.",
+                "ユーザーの質問が会話のコンテキストを必要とするフォローアップである"
+                "場合は、代わりに query_datarobot_rag_with_context を使用してください。",
             ),
             name="RAG Searcher",
         )
@@ -171,30 +171,28 @@ class MyAgent(LangGraphAgent):
             self.llm(),
             tools=self.mcp_tools,
             prompt=make_system_prompt(
-                "You are an answer quality specialist.\n"
+                "あなたは回答品質の専門家です。\n"
                 "\n"
-                "You have access to the following context from earlier in this "
-                "conversation:\n"
-                "- The user's ORIGINAL question (the first human message).\n"
-                "- Search results with references retrieved from the knowledge base "
-                "(in the previous assistant message).\n"
+                "この会話の中で、以下のコンテキストにアクセスできます：\n"
+                "- ユーザーの元の質問（最初のヒューマンメッセージ）。\n"
+                "- ナレッジベースから取得された参照付きの検索結果"
+                "（前のアシスタントメッセージ内）。\n"
                 "\n"
-                "Your task:\n"
-                "1. EVALUATE: Review each reference/citation from the search results. "
-                "Determine which references are genuinely relevant to the user's "
-                "original question and which are not.\n"
-                "2. GENERATE: Compose a comprehensive answer using ONLY information "
-                "from the relevant references. Include numbered citation markers "
-                "(e.g., [1], [2]) when referencing specific sources.\n"
-                "3. CITE: Append a References section at the end listing the sources "
-                "you actually used.\n"
+                "あなたのタスク：\n"
+                "1. 評価：検索結果の各参照・引用をレビューする。どの参照がユーザーの"
+                "元の質問に本当に関連しているか、どれが関連していないかを判断する。\n"
+                "2. 生成：関連する参照からの情報のみを使用して、包括的な回答を作成する。"
+                "特定のソースを参照する際は、番号付きの引用マーカー"
+                "（例：[1]、[2]）を含める。\n"
+                "3. 引用：実際に使用したソースを一覧にした参考文献セクションを末尾に"
+                "追加する。\n"
                 "\n"
-                "Rules:\n"
-                "- Do NOT use any tools. Work only with the information already provided.\n"
-                "- Do NOT fabricate information. If no relevant information was found, "
-                "honestly tell the user.\n"
-                "- Answer in the same language as the user's original question.\n"
-                "- Be comprehensive but concise.",
+                "ルール：\n"
+                "- ツールを使用しないこと。既に提供された情報のみで作業する。\n"
+                "- 情報を捏造しないこと。関連する情報が見つからなかった場合は、"
+                "正直にユーザーに伝える。\n"
+                "- ユーザーの元の質問と同じ言語で回答する。\n"
+                "- 包括的かつ簡潔に回答する。",
             ),
             name="Answer Refiner",
         )
